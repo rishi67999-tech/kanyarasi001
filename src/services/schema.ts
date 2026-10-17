@@ -16,10 +16,14 @@ export const CodeTraceSchema = z.object({
 })
 
 export const PracticeQuestionSchema = z.object({
+  id: z.string().optional(),
   question: z.string().min(5),
   options: z.array(z.string()).min(2).max(6),
   correctIndex: z.number().int().min(0),
   explanation: z.string(),
+  difficulty: z.enum(['easy', 'medium', 'challenging']).optional(),
+  type: z.enum(['mcq', 'output_prediction', 'debugging', 'fill_blank']).optional(),
+  codeSnippet: z.string().optional(),
 })
 
 export const LessonStepSchema = z.object({
@@ -44,6 +48,7 @@ export const PracticeExerciseSchema = z.object({
   hint: z.string().optional(),
   starterCode: z.string().optional(),
   solutionCode: z.string().optional(),
+  type: z.enum(['code', 'debug', 'fill_blank', 'predict']).optional(),
 })
 
 export const SuggestedNextLessonSchema = z.object({
@@ -86,11 +91,13 @@ export const ConceptNodeSchema = z.object({
   whyItMatters: z.string().min(5),
   commonMistakes: z.array(z.string()).default([]),
   practiceQuestion: PracticeQuestionSchema.optional(),
+  practiceQuestions: z.array(PracticeQuestionSchema).optional(),
   prerequisiteIds: z.array(z.string()).optional(),
   sources: z.array(SourceCitationSchema).optional(),
   practiceExercises: z.array(PracticeExerciseSchema).optional(),
   nextSuggestedLessons: z.array(SuggestedNextLessonSchema).optional(),
   linkedMapTopic: z.string().optional(),
+  subjectKey: z.string().optional(),
 })
 
 export const ConceptEdgeSchema = z.object({

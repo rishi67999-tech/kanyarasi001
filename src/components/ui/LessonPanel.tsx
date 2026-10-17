@@ -13,6 +13,8 @@ import {
   Globe,
   Code2,
   HelpCircle,
+  Minimize2,
+  Maximize2,
 } from 'lucide-react'
 import type { ConceptNode, ConceptEdge, SourceCitation } from '../../types/knowledge'
 import { CodeTraceViewer } from './CodeTraceViewer'
@@ -49,6 +51,7 @@ export function LessonPanel({
   const [explanationLevel, setExplanationLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner')
   const [revealedHints, setRevealedHints] = useState<Record<string, boolean>>({})
   const [revealedSolutions, setRevealedSolutions] = useState<Record<string, boolean>>({})
+  const [isMinimized, setIsMinimized] = useState(false)
 
   // Combine node-specific and map-level verified citations
   const effectiveSources = node.sources && node.sources.length > 0 ? node.sources : mapSources
@@ -60,6 +63,7 @@ export function LessonPanel({
     setExplanationLevel('beginner')
     setRevealedHints({})
     setRevealedSolutions({})
+    setIsMinimized(false)
   }, [node.id])
 
   // Find incoming and outgoing connections
@@ -68,7 +72,50 @@ export function LessonPanel({
   const relatedNodes = allNodes.filter((n) => relatedNodeIds.includes(n.id))
 
   const hasTrace = Boolean(node.concreteExample?.trace)
-  const hasQuiz = Boolean(node.practiceQuestion)
+  const practiceQuestionCount =
+    (node.practiceQuestions && node.practiceQuestions.length > 0
+      ? node.practiceQuestions.length
+      : node.practiceQuestion
+      ? 1
+      : 0)
+  const hasQuiz = practiceQuestionCount > 0
+
+  if (isMinimized) {
+    return (
+      <div className="absolute bottom-6 right-6 z-50 pointer-events-auto max-w-sm w-full animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#080a10f6] border border-cyan-500/50 shadow-2xl backdrop-blur-2xl text-white">
+          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+            <div className="w-7 h-7 rounded-lg bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shrink-0">
+              <BookOpen className="w-3.5 h-3.5" />
+            </div>
+            <div className="truncate">
+              <h4 className="font-bold text-xs truncate">{node.title}</h4>
+              <p className="text-[10px] font-mono text-cyan-400 capitalize">
+                {node.category} • Depth {node.depth}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setIsMinimized(false)}
+              className="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-mono text-xs transition flex items-center gap-1 shadow-md shadow-cyan-900/40"
+              title="Expand Lesson Panel"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span>Expand</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition"
+              title="Close Panel"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="absolute top-0 right-0 h-full w-full max-w-md md:max-w-lg bg-[#07090ef2] backdrop-blur-2xl border-l border-slate-800/90 text-slate-200 z-50 pointer-events-auto flex flex-col shadow-2xl transition-all duration-300">
@@ -85,7 +132,7 @@ export function LessonPanel({
                 className="flex items-center gap-1 text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/60"
                 title={searchSummary || 'Verified with live web research'}
               >
-                <Globe className="w-3 h-3 text-cyan-400" />
+                <Globe className="w-3.5 h-3.5 text-cyan-400" />
                 WEB GROUNDED
               </span>
             )}
@@ -99,13 +146,22 @@ export function LessonPanel({
           <h2 className="text-lg font-bold text-white tracking-tight">{node.title}</h2>
         </div>
 
-        <button
-          onClick={onClose}
-          className="p-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white transition"
-          title="Return to 3D Map (Esc)"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setIsMinimized(true)}
+            className="p-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+            title="Minimize Panel to 3D Canvas"
+          >
+            <Minimize2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+            title="Return to 3D Map (Esc)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Primary Navigation Tabs */}
@@ -160,7 +216,7 @@ export function LessonPanel({
             }`}
           >
             <CheckCircle className="w-3.5 h-3.5" />
-            <span>Practice Quiz</span>
+            <span>Practice Quiz ({practiceQuestionCount})</span>
           </button>
         )}
 
@@ -574,10 +630,11 @@ export function LessonPanel({
         )}
 
         {/* Tab 3: Practice Quiz (Keyed to node.id to guarantee no state leakage) */}
-        {activeTab === 'quiz' && node.practiceQuestion && (
+        {activeTab === 'quiz' && hasQuiz && (
           <PracticeQuiz
             key={node.id}
             question={node.practiceQuestion}
+            questions={node.practiceQuestions}
             nodeTitle={node.title}
             onCompleted={() => onMarkCompleted(node.id)}
           />

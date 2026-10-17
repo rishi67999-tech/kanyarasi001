@@ -23,10 +23,14 @@ export interface CodeTrace {
 }
 
 export interface PracticeQuestion {
+  id?: string
   question: string
   options: string[]
   correctIndex: number
   explanation: string
+  difficulty?: 'easy' | 'medium' | 'challenging'
+  type?: 'mcq' | 'output_prediction' | 'debugging' | 'fill_blank'
+  codeSnippet?: string
 }
 
 export interface LessonStep {
@@ -44,6 +48,7 @@ export interface PracticeExercise {
   hint?: string
   starterCode?: string
   solutionCode?: string
+  type?: 'code' | 'debug' | 'fill_blank' | 'predict'
 }
 
 export interface SuggestedNextLesson {
@@ -77,11 +82,13 @@ export interface ConceptNode {
   whyItMatters: string
   commonMistakes: string[]
   practiceQuestion?: PracticeQuestion
+  practiceQuestions?: PracticeQuestion[]
   prerequisiteIds?: string[]
   sources?: SourceCitation[]
   practiceExercises?: PracticeExercise[]
   nextSuggestedLessons?: SuggestedNextLesson[]
   linkedMapTopic?: string
+  subjectKey?: string
 }
 
 export interface ConceptEdge {

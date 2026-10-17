@@ -6,7 +6,7 @@ import { ConstructionControls } from './components/ui/ConstructionControls'
 import { CameraControlsOverlay } from './components/ui/CameraControlsOverlay'
 import { LessonPanel } from './components/ui/LessonPanel'
 import { CurriculumCatalogModal } from './components/ui/CurriculumCatalogModal'
-import { PYTHON_LOOPS_MAP } from './data/predefinedMaps'
+import { PYTHON_MASTER_OVERVIEW_MAP } from './data/pythonMasterMaps'
 import { generateKnowledgeMap } from './services/aiService'
 import {
   saveKnowledgeMap,
@@ -18,7 +18,7 @@ import type { KnowledgeMap } from './types/knowledge'
 import { X, AlertCircle } from 'lucide-react'
 
 export function App() {
-  const [currentMap, setCurrentMap] = useState<KnowledgeMap>(PYTHON_LOOPS_MAP)
+  const [currentMap, setCurrentMap] = useState<KnowledgeMap>(PYTHON_MASTER_OVERVIEW_MAP)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -75,6 +75,42 @@ export function App() {
       }
     },
     [currentMap]
+  )
+
+  // Handle 3D node selection and hierarchical curriculum navigation
+  const handleSelectNode = useCallback(
+    (nodeId: string | null) => {
+      if (!nodeId || !currentMap) {
+        setSelectedNodeId(null)
+        return
+      }
+
+      const node = currentMap.nodes.find((n) => n.id === nodeId)
+      if (!node) {
+        setSelectedNodeId(nodeId)
+        return
+      }
+
+      // 1. If on Master Overview map, clicking a subject ball reveals its topic balls in 3D
+      if (currentMap.id === 'map-python-master' && node.linkedMapTopic) {
+        handleTopicSubmit(node.linkedMapTopic)
+        return
+      }
+
+      // 2. If on a Section Map, clicking a topic ball with a dedicated 3D map opens it
+      if (
+        currentMap.id.startsWith('map-sec-') &&
+        node.linkedMapTopic &&
+        node.id !== currentMap.centralNodeId
+      ) {
+        handleTopicSubmit(node.linkedMapTopic)
+        return
+      }
+
+      // 3. Otherwise, select the node to open the detailed LessonPanel
+      setSelectedNodeId(nodeId)
+    },
+    [currentMap, handleTopicSubmit]
   )
 
   // Camera Reset
@@ -147,7 +183,7 @@ export function App() {
         edgeProgress={construction.edgeProgress}
         cameraResetTrigger={cameraResetTrigger}
         isPanelOpen={Boolean(selectedNodeId)}
-        onSelectNode={setSelectedNodeId}
+        onSelectNode={handleSelectNode}
         onHoverNode={setHoveredNodeId}
       />
 
@@ -213,10 +249,11 @@ export function App() {
 
       {/* Search / Topic Prompt Modal */}
       {isSearchOpen && (
-        <div className="absolute inset-0 z-40 bg-black/85 backdrop-blur-xl flex flex-col items-center justify-center p-4">
+        <div className="absolute inset-0 z-40 bg-black/75 backdrop-blur-md flex flex-col items-center justify-start pt-16 md:pt-24 p-4 animate-in fade-in duration-200">
           <button
             onClick={() => setIsSearchOpen(false)}
             className="absolute top-6 right-6 p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white transition"
+            title="Close Search (Esc)"
           >
             <X className="w-5 h-5" />
           </button>

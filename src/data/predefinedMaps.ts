@@ -832,6 +832,11 @@ import {
   PYTHON_FUNDAMENTALS_MAP,
   PYTHON_CONTROL_FLOW_MAP,
   PYTHON_DATA_STRUCTURES_MAP,
+  PYTHON_FUNCTIONS_MODULES_MAP,
+  PYTHON_ERRORS_FILES_MAP,
+  PYTHON_OOP_MAP,
+  PYTHON_ADVANCED_MAP,
+  PYTHON_PROJECTS_MAP,
 } from './pythonSectionMaps'
 
 export const PREDEFINED_TOPICS: Record<string, KnowledgeMap> = {
@@ -859,6 +864,37 @@ export const PREDEFINED_TOPICS: Record<string, KnowledgeMap> = {
   'data structures in python': PYTHON_DATA_STRUCTURES_MAP,
   'data structures': PYTHON_DATA_STRUCTURES_MAP,
   'section c: data structures': PYTHON_DATA_STRUCTURES_MAP,
+
+  // Section D: Functions & Modules
+  'python functions and modules': PYTHON_FUNCTIONS_MODULES_MAP,
+  'functions and modules': PYTHON_FUNCTIONS_MODULES_MAP,
+  'functions and modules in python': PYTHON_FUNCTIONS_MODULES_MAP,
+  'section d: functions and modules': PYTHON_FUNCTIONS_MODULES_MAP,
+
+  // Section E: Errors & Files
+  'python error handling and files': PYTHON_ERRORS_FILES_MAP,
+  'error handling and files': PYTHON_ERRORS_FILES_MAP,
+  'python error handling': PYTHON_ERRORS_FILES_MAP,
+  'error handling in python': PYTHON_ERRORS_FILES_MAP,
+  'section e: error handling and files': PYTHON_ERRORS_FILES_MAP,
+
+  // Section F: Object-Oriented Programming (OOP)
+  'python oop': PYTHON_OOP_MAP,
+  'python oop architecture': PYTHON_OOP_MAP,
+  'section f: object-oriented programming': PYTHON_OOP_MAP,
+
+  // Section G: Advanced Python
+  'advanced python': PYTHON_ADVANCED_MAP,
+  'python advanced': PYTHON_ADVANCED_MAP,
+  'intermediate and advanced python': PYTHON_ADVANCED_MAP,
+  'section g: intermediate and advanced python': PYTHON_ADVANCED_MAP,
+
+  // Section H: Practical Projects
+  'practical python projects': PYTHON_PROJECTS_MAP,
+  'python practical projects': PYTHON_PROJECTS_MAP,
+  'python projects': PYTHON_PROJECTS_MAP,
+  'projects in python': PYTHON_PROJECTS_MAP,
+  'section h: practical python projects': PYTHON_PROJECTS_MAP,
 
   // Python Loops
   'explain loops in python': PYTHON_LOOPS_MAP,
@@ -952,7 +988,6 @@ export const PREDEFINED_TOPICS: Record<string, KnowledgeMap> = {
   'python object': CLASSES_OBJECTS_MAP,
   'python objects': CLASSES_OBJECTS_MAP,
   'oop': CLASSES_OBJECTS_MAP,
-  'python oop': CLASSES_OBJECTS_MAP,
   'object oriented programming': CLASSES_OBJECTS_MAP,
   'explain oop': CLASSES_OBJECTS_MAP,
 
