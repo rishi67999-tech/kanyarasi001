@@ -79,6 +79,33 @@ export const PYTHON_FUNDAMENTALS_MAP: KnowledgeMap = {
         explanation: 'Uses type annotations, arithmetic, and formatted string literals.',
         expectedOutput: 'Welcome Developer, next year you will be 25',
       },
+      edgeCases: [
+        'Mixing tab characters with spaces causes TabError in Python 3.',
+        'Variable names starting with numbers (1var) or containing hyphens (my-var) cause SyntaxError.',
+        'Chained assignment a = b = [] binds both identifiers to the SAME mutable list instance in heap memory.',
+      ],
+      intermediateExample: {
+        code: `# Safe user input processing and error handling
+raw_input = "  42  "
+cleaned = raw_input.strip()
+if cleaned.isdigit():
+    number = int(cleaned)
+    print(f"Parsed valid integer: {number}")
+else:
+    print("Invalid numeric string")`,
+        explanation: 'Clean data sanitation using string methods and type conversion.',
+        expectedOutput: 'Parsed valid integer: 42',
+      },
+      advancedExample: {
+        code: `import sys
+
+# Bytecode inspection and object header memory overhead
+val = 1
+print(f"Type: {type(val).__name__}")
+print(f"Memory overhead of PyLongObject: {sys.getsizeof(val)} bytes")`,
+        explanation: 'CPython integers are full C structures containing reference counts and digit arrays (28 bytes minimum).',
+        expectedOutput: 'Type: int\nMemory overhead of PyLongObject: 28 bytes',
+      },
       practiceExercises: [
         {
           id: 'fund-rt-ex1',
@@ -94,6 +121,9 @@ export const PYTHON_FUNDAMENTALS_MAP: KnowledgeMap = {
         options: ['Exactly 4 spaces per indentation level', 'A single tab character', '2 spaces per level', 'Any combination of tabs and spaces'],
         correctIndex: 0,
         explanation: 'PEP 8 strictly mandates 4 spaces per indentation level and forbids mixing tabs with spaces.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'PEP 8 specifies an exact number of space characters for code blocks.',
       },
       practiceQuestions: [
         {
@@ -104,6 +134,7 @@ export const PYTHON_FUNDAMENTALS_MAP: KnowledgeMap = {
           difficulty: 'easy',
           type: 'mcq',
           explanation: 'PEP 8 strictly mandates 4 spaces per indentation level and forbids mixing tabs with spaces.',
+          hint: 'PEP 8 specifies an exact number of space characters for code blocks.',
         },
         {
           id: 'fund-q2',
@@ -114,6 +145,7 @@ export const PYTHON_FUNDAMENTALS_MAP: KnowledgeMap = {
           difficulty: 'medium',
           type: 'output_prediction',
           explanation: 'Integers are immutable in Python. Reassigning x = x + 5 binds x to a new integer 15, leaving y pointing to 10.',
+          hint: 'Integers are immutable; `x += 5` creates a new object rather than modifying 10.',
         },
         {
           id: 'fund-q3',
@@ -129,6 +161,43 @@ export const PYTHON_FUNDAMENTALS_MAP: KnowledgeMap = {
           difficulty: 'challenging',
           type: 'debugging',
           explanation: 'birth_year is a string. Python disallows subtraction between integers and strings without explicit casting int(birth_year).',
+          hint: 'You cannot perform mathematical subtraction between an int and a str.',
+        },
+        {
+          id: 'fund-q4',
+          question: 'What does `bool("False")` evaluate to in Python?',
+          options: ['True', 'False', 'None', 'ValueError'],
+          correctIndex: 0,
+          difficulty: 'easy',
+          type: 'output_prediction',
+          explanation: 'In Python, any non-empty string is truthy, regardless of the text it contains. Only empty string `""` evaluates to False.',
+          hint: 'Non-empty strings in Python always evaluate to truthy.',
+        },
+        {
+          id: 'fund-q5',
+          question: 'What will be printed when inspecting `b` after this chained assignment?',
+          codeSnippet: 'a = b = []\na.append(42)\nprint(b)',
+          options: ['[42]', '[]', 'None', 'TypeError: chained assignment creates copies'],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'output_prediction',
+          explanation: 'Chained assignment binds both `a` and `b` to the exact same list instance in memory. Modifying `a` reflects in `b`.',
+          hint: 'Chained assignment points both variables to the same heap object.',
+        },
+        {
+          id: 'fund-q6',
+          question: 'Why does `0.1 + 0.2 == 0.3` evaluate to False in Python?',
+          options: [
+            'Binary floating-point hardware cannot represent 0.1 and 0.2 exactly in base 2 (0.1 + 0.2 ≈ 0.30000000000000004)',
+            'Python rounds all float additions down to zero',
+            'The == operator is not permitted between floating point variables',
+            'Float literals must use the decimal.Decimal type to evaluate equality',
+          ],
+          correctIndex: 0,
+          difficulty: 'challenging',
+          type: 'mcq',
+          explanation: 'Python uses IEEE 754 double precision floats. Numbers like 0.1 and 0.2 have repeating fractions in binary, causing tiny rounding differences.',
+          hint: 'Think about base-2 representation of decimal fractions.',
         },
       ],
     },
@@ -475,6 +544,41 @@ export const PYTHON_CONTROL_FLOW_MAP: KnowledgeMap = {
         explanation: 'Demonstrates flow alteration using continue and break.',
         expectedOutput: '1 3 5',
       },
+      edgeCases: [
+        'Short-circuit evaluation stops evaluating logical operators once the outcome is guaranteed (e.g. False and func() never executes func).',
+        'Mutating a list while iterating over it in a for loop causes elements to be skipped silently due to pointer shifting.',
+        'A break statement inside nested loops terminates only the innermost loop, not the enclosing outer loop.',
+      ],
+      intermediateExample: {
+        code: `# Early exit guard pattern in processing records
+def process_transaction(user, amount):
+    if user is None:
+        return "Error: No user"
+    if amount <= 0:
+        return "Error: Invalid amount"
+    if user.get("balance", 0) < amount:
+        return "Error: Insufficient funds"
+    return f"Success: Processed \${amount}"
+
+print(process_transaction({"balance": 100}, 50))`,
+        explanation: 'Guard clauses simplify nested if-else pyramids into readable linear validation steps.',
+        expectedOutput: 'Success: Processed $50',
+      },
+      advancedExample: {
+        code: `# Structural pattern matching with guard clauses (Python 3.10+)
+def route_event(event):
+    match event:
+        case {"type": "click", "x": x, "y": y} if x > 0 and y > 0:
+            return f"Valid viewport click at ({x}, {y})"
+        case {"type": "keypress", "key": key}:
+            return f"Key press: {key}"
+        case _:
+            return "Unhandled event"
+
+print(route_event({"type": "click", "x": 100, "y": 200}))`,
+        explanation: 'Pattern matching destructures dictionaries and evaluates contextual guard conditions simultaneously.',
+        expectedOutput: 'Valid viewport click at (100, 200)',
+      },
       practiceExercises: [
         {
           id: 'cf-rt-ex1',
@@ -490,6 +594,9 @@ export const PYTHON_CONTROL_FLOW_MAP: KnowledgeMap = {
         options: ['continue', 'break', 'pass', 'return'],
         correctIndex: 0,
         explanation: 'The continue statement halts the current iteration cycle and advances to the next item.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'This keyword skips the remainder of the current loop body.',
       },
       practiceQuestions: [
         {
@@ -500,6 +607,7 @@ export const PYTHON_CONTROL_FLOW_MAP: KnowledgeMap = {
           difficulty: 'easy',
           type: 'mcq',
           explanation: 'The continue statement halts the current iteration cycle and advances to the next item.',
+          hint: 'This keyword skips the remainder of the current loop body.',
         },
         {
           id: 'cf-q2',
@@ -510,6 +618,7 @@ export const PYTHON_CONTROL_FLOW_MAP: KnowledgeMap = {
           difficulty: 'medium',
           type: 'output_prediction',
           explanation: 'Because no even number was found, the loop never hits break. In Python, loop else executes when a loop runs to natural completion.',
+          hint: 'The loop else block executes only if break was not triggered.',
         },
         {
           id: 'cf-q3',
@@ -525,6 +634,49 @@ export const PYTHON_CONTROL_FLOW_MAP: KnowledgeMap = {
           difficulty: 'challenging',
           type: 'debugging',
           explanation: 'Without updating count += 1, the condition count <= 5 remains True forever, causing an infinite loop.',
+          hint: 'Check if the condition variable changes anywhere in the loop body.',
+        },
+        {
+          id: 'cf-q4',
+          question: 'What is the output of this conditional checking truthiness of an empty list?',
+          codeSnippet: 'items = []\nif items:\n    print("Full")\nelse:\n    print("Empty")',
+          options: ['Empty', 'Full', 'None', 'TypeError'],
+          correctIndex: 0,
+          difficulty: 'easy',
+          type: 'output_prediction',
+          explanation: 'Empty containers (lists, tuples, dicts, sets, strings) evaluate to False in boolean contexts in Python.',
+          hint: 'Empty containers in Python evaluate to falsy.',
+        },
+        {
+          id: 'cf-q5',
+          question: 'Will "Executed" be printed by the following code with short-circuiting?',
+          codeSnippet: 'def log_msg():\n    print("Executed")\n    return True\n\nres = False and log_msg()',
+          options: [
+            'No, because "and" short-circuits immediately when the first operand is False',
+            'Yes, Python evaluates all operands before returning',
+            'Yes, log_msg() runs during compilation',
+            'SyntaxError: cannot assign boolean expression to variable',
+          ],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'debugging',
+          explanation: 'Python evaluates boolean "and" from left to right. Since the left operand is False, the entire result is guaranteed to be False, so log_msg() is never called.',
+          hint: 'In `A and B`, if A is False, B is never evaluated.',
+        },
+        {
+          id: 'cf-q6',
+          question: 'In structural pattern matching (match/case), what does the underscore `case _:` represent?',
+          options: [
+            'The wildcard / default pattern that matches any unmatched subject',
+            'A syntax error in Python 3.10+',
+            'A pattern that matches only None values',
+            'A pattern that forces the match statement to repeat',
+          ],
+          correctIndex: 0,
+          difficulty: 'challenging',
+          type: 'mcq',
+          explanation: 'The underscore `_` in a match statement acts as a wildcard catch-all pattern, functioning like the default case in other languages.',
+          hint: 'The underscore is the standard wildcard in pattern matching.',
         },
       ],
     },
@@ -802,6 +954,40 @@ export const PYTHON_DATA_STRUCTURES_MAP: KnowledgeMap = {
         explanation: 'Converts a list to a set to remove duplicates, then uses a dict comprehension to map lengths.',
         expectedOutput: "{'apple': 5, 'banana': 6, 'orange': 6}",
       },
+      edgeCases: [
+        'A tuple containing mutable elements (e.g. (1, [2, 3])) is unhashable and raises TypeError if used as a dict key or set item.',
+        'Dictionary key lookups compare both hash equality (__hash__) AND value equality (__eq__), preventing hash collisions from producing wrong data.',
+        'Copying nested collections with .copy() creates a shallow copy; modifying inner objects affects both copies unless copy.deepcopy() is used.',
+      ],
+      intermediateExample: {
+        code: `# Frequency counting and group aggregation using dict and collections
+from collections import defaultdict, Counter
+
+words = ["apple", "banana", "apple", "cherry", "banana", "apple"]
+counts = Counter(words)
+print("Most common:", counts.most_common(1))
+
+grouped = defaultdict(list)
+for w in words:
+    grouped[len(w)].append(w)
+print("By length:", dict(grouped))`,
+        explanation: 'Specialized containers provide clean, expressive data pipelines for counting and grouping.',
+        expectedOutput: "Most common: [('apple', 3)]\nBy length: {5: ['apple', 'apple', 'apple'], 6: ['banana', 'cherry', 'banana']}",
+      },
+      advancedExample: {
+        code: `import sys
+
+# Memory comparison between lists, tuples, and sets
+data = list(range(100))
+tup = tuple(data)
+s = set(data)
+
+print(f"List bytes:  {sys.getsizeof(data)}")
+print(f"Tuple bytes: {sys.getsizeof(tup)}")
+print(f"Set bytes:   {sys.getsizeof(s)}")`,
+        explanation: 'Tuples have lower memory overhead than dynamic lists; sets allocate hash tables taking more memory for O(1) lookups.',
+        expectedOutput: 'List bytes:  856\nTuple bytes: 840\nSet bytes:   8408',
+      },
       practiceExercises: [
         {
           id: 'ds-rt-ex1',
@@ -817,6 +1003,9 @@ export const PYTHON_DATA_STRUCTURES_MAP: KnowledgeMap = {
         options: ['O(1) constant time', 'O(N) linear time', 'O(log N) logarithmic time', 'O(N^2) quadratic time'],
         correctIndex: 0,
         explanation: 'Python dictionaries utilize a hash table implementation that achieves O(1) average lookup time.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Hash tables map keys directly to bucket indices.',
       },
       practiceQuestions: [
         {
@@ -827,6 +1016,7 @@ export const PYTHON_DATA_STRUCTURES_MAP: KnowledgeMap = {
           difficulty: 'easy',
           type: 'mcq',
           explanation: 'Python dictionaries utilize a hash table implementation that achieves O(1) average lookup time.',
+          hint: 'Hash tables map keys directly to bucket indices.',
         },
         {
           id: 'ds-q2',
@@ -836,6 +1026,7 @@ export const PYTHON_DATA_STRUCTURES_MAP: KnowledgeMap = {
           difficulty: 'medium',
           type: 'output_prediction',
           explanation: 'A step parameter of -1 reverses the sequence, returning [4, 3, 2, 1].',
+          hint: 'A negative step traverses the sequence in reverse order.',
         },
         {
           id: 'ds-q3',
@@ -850,6 +1041,42 @@ export const PYTHON_DATA_STRUCTURES_MAP: KnowledgeMap = {
           difficulty: 'challenging',
           type: 'debugging',
           explanation: 'Dictionary keys must have an immutable hash value. Even though the tuple is immutable, its child list is mutable, causing TypeError: unhashable type: "list".',
+          hint: 'All child elements of a key tuple must also be immutable.',
+        },
+        {
+          id: 'ds-q4',
+          question: 'What is the output of `len(set([1, 2, 2, 3, 3, 3]))`?',
+          options: ['3', '6', '1', 'TypeError'],
+          correctIndex: 0,
+          difficulty: 'easy',
+          type: 'output_prediction',
+          explanation: 'Sets enforce unique elements and automatically discard duplicates. The distinct elements are 1, 2, and 3, so length is 3.',
+          hint: 'Sets store only unique values.',
+        },
+        {
+          id: 'ds-q5',
+          question: 'What does `{"a": 1}.get("b", 100)` return in Python?',
+          options: ['100', 'None', 'KeyError: "b"', '1'],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'output_prediction',
+          explanation: 'The `.get(key, default)` method returns the second argument as a fallback default when the key is missing from the dictionary, avoiding a KeyError.',
+          hint: 'The second argument to .get() is the fallback value if the key does not exist.',
+        },
+        {
+          id: 'ds-q6',
+          question: 'What collision resolution strategy does CPython use for hash tables in dictionaries and sets?',
+          options: [
+            'Open addressing with pseudo-random perturbation probing',
+            'Separate chaining with linked lists',
+            'Binary search trees in each bucket',
+            'Red-black self-balancing trees',
+          ],
+          correctIndex: 0,
+          explanation: 'CPython implements open addressing with a perturbation recurrence formula (`j = ((5*j) + 1 + perturb) & mask`) to efficiently jump across collision slots without linked lists.',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'CPython stores entries directly in a contiguous array without separate linked list nodes.',
         },
       ],
     },
@@ -1136,6 +1363,53 @@ export const PYTHON_FUNCTIONS_MODULES_MAP: KnowledgeMap = {
         explanation: 'Demonstrates type hints, default argument values, docstring, and return value.',
         expectedOutput: 'Total: $108.0',
       },
+      edgeCases: [
+        'Default arguments are evaluated ONCE at function definition time, leading to shared state bugs if given mutable defaults like [] or {}.',
+        'Assigning to a variable anywhere in a function makes it local to that entire scope; reading it prior to assignment raises UnboundLocalError.',
+        'Variable-length positional parameters *args pack into a tuple, while **kwargs pack into a dict; keyword-only arguments must follow * or *args.',
+      ],
+      intermediateExample: {
+        code: `# Higher-order parsing function with fallback default and tuple unpacking
+def parse_user_record(raw: str, default_role: str = "viewer") -> tuple[str, str]:
+    """Parse user:role string with fallback default."""
+    parts = raw.strip().split(":", 1)
+    username = parts[0]
+    role = parts[1] if len(parts) > 1 and parts[1] else default_role
+    return username.lower(), role.lower()
+
+user1, role1 = parse_user_record("Alice:Admin")
+user2, role2 = parse_user_record("Bob")
+print(f"User 1: {user1} ({role1})")
+print(f"User 2: {user2} ({role2})")`,
+        explanation: 'Uses default arguments, string splitting, and tuple unpacking with type annotations.',
+        expectedOutput: 'User 1: alice (admin)\nUser 2: bob (viewer)',
+      },
+      advancedExample: {
+        code: `from functools import wraps
+
+# Decorator factory preserving metadata and wrapping callable execution
+def retry(times: int = 3):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(1, times + 1):
+                try:
+                    return func(*args, **kwargs)
+                except ValueError as err:
+                    if attempt == times:
+                        raise
+                    print(f"Attempt {attempt} failed: {err}")
+        return wrapper
+    return decorator
+
+@retry(times=2)
+def parse_id(val: str) -> int:
+    return int(val)
+
+print("Parsed ID:", parse_id("100"))`,
+        explanation: 'Metaprogramming with closures, decorator factory, @wraps metadata preservation, and exception retry loops.',
+        expectedOutput: 'Parsed ID: 100',
+      },
       practiceExercises: [
         {
           id: 'fn-rt-ex1',
@@ -1151,6 +1425,9 @@ export const PYTHON_FUNCTIONS_MODULES_MAP: KnowledgeMap = {
         options: ['None', '0', 'False', 'Undefined'],
         correctIndex: 0,
         explanation: 'Any function completing execution without hitting a return statement returns the singleton None.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Python functions always return an object, defaulting to the singleton None.',
       },
       practiceQuestions: [
         {
@@ -1161,6 +1438,7 @@ export const PYTHON_FUNCTIONS_MODULES_MAP: KnowledgeMap = {
           difficulty: 'easy',
           type: 'mcq',
           explanation: 'Any function completing execution without hitting a return statement returns the singleton None.',
+          hint: 'Python functions always return an object, defaulting to the singleton None.',
         },
         {
           id: 'fn-q2',
@@ -1176,6 +1454,7 @@ export const PYTHON_FUNCTIONS_MODULES_MAP: KnowledgeMap = {
           difficulty: 'medium',
           type: 'output_prediction',
           explanation: 'Default arguments are evaluated once at function definition time, so all calls without a second argument share the exact same list instance.',
+          hint: 'Default argument expressions run once when the function is defined, not per call.',
         },
         {
           id: 'fn-q3',
@@ -1190,6 +1469,48 @@ export const PYTHON_FUNCTIONS_MODULES_MAP: KnowledgeMap = {
           difficulty: 'challenging',
           type: 'debugging',
           explanation: 'The idiomatic Python fix is: def add_item(val, bucket=None): if bucket is None: bucket = [].',
+          hint: 'Use None as a sentinel value in the function signature and initialize the list inside the body.',
+        },
+        {
+          id: 'fn-q4',
+          question: "In Python's LEGB scope resolution rule, what do the four letters stand for?",
+          options: [
+            'Local, Enclosing, Global, Built-in',
+            'Lexical, Extended, Global, Base',
+            'Literal, Enclosing, Generated, Block',
+            'Local, Explicit, Global, Binary',
+          ],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'mcq',
+          explanation: 'Python searches variable names first in Local scope, then Enclosing (outer functions), Global (module level), and finally Built-in.',
+          hint: 'The lookup starts at the innermost function and climbs outward to built-in functions like len().',
+        },
+        {
+          id: 'fn-q5',
+          question: 'What error is raised when executing this code snippet?',
+          codeSnippet: 'x = 10\ndef modify():\n    print(x)\n    x = 20\nmodify()',
+          options: ['UnboundLocalError', '10', 'None', 'NameError'],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'output_prediction',
+          explanation: 'Python compiles variable scopes at parse time. Since x is assigned inside modify, it is treated as a local variable throughout the entire body, so referencing it before the assignment raises UnboundLocalError.',
+          hint: 'Assigning to x inside the function makes x local for the entire function scope.',
+        },
+        {
+          id: 'fn-q6',
+          question: "How can you define a function that forces callers to provide 'debug' only as a keyword argument?",
+          options: [
+            'def run(data, *, debug=False):',
+            'def run(data, debug: kwarg=False):',
+            'def run(data, / debug=False):',
+            'def run(*data, **debug):',
+          ],
+          correctIndex: 0,
+          difficulty: 'challenging',
+          type: 'debugging',
+          explanation: 'Parameters placed after a bare * or *args cannot be passed positionally and must be supplied as keyword arguments (e.g. run(data, debug=True)).',
+          hint: 'A bare asterisk `*` in the parameter list separates positional parameters from keyword-only parameters.',
         },
       ],
     },
@@ -1478,6 +1799,56 @@ export const PYTHON_ERRORS_FILES_MAP: KnowledgeMap = {
         explanation: 'Safely writes to a file with utf-8 encoding using a context manager and exception guard.',
         expectedOutput: 'File saved successfully.',
       },
+      edgeCases: [
+        'A finally block executes even if the try or except block executes an explicit return; a return in finally overwrites earlier return values or uncaught exceptions.',
+        'Catching Exception catches standard runtime errors, but leaves KeyboardInterrupt, SystemExit, and GeneratorExit unintercepted because they inherit directly from BaseException.',
+        'Opening files on Windows without specifying encoding="utf-8" falls back to the system locale (e.g. CP1252), causing silent data corruption or UnicodeDecodeError on non-ASCII characters.',
+      ],
+      intermediateExample: {
+        code: `import json
+
+# Safe JSON file loader with defensive fallback
+def load_app_settings(filepath: str) -> dict:
+    """Safely read and parse a JSON configuration file."""
+    default_settings = {"theme": "dark", "timeout": 30}
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("Config file not found. Using defaults.")
+        return default_settings
+    except json.JSONDecodeError as err:
+        print(f"Malformed JSON ({err}). Using defaults.")
+        return default_settings
+
+print("Loaded Settings:", load_app_settings("nonexistent_app.json"))`,
+        explanation: 'Robust configuration parser combining with statement context manager, FileNotFoundError, and JSONDecodeError handling.',
+        expectedOutput: 'Config file not found. Using defaults.\nLoaded Settings: {\'theme\': \'dark\', \'timeout\': 30}',
+      },
+      advancedExample: {
+        code: `# Custom domain exception hierarchy and explicit exception chaining (PEP 3134)
+class ServiceError(Exception):
+    """Base exception for application services."""
+    pass
+
+class DatabaseTimeoutError(ServiceError):
+    """Raised when remote database operation exceeds deadline."""
+    pass
+
+def query_user_record(user_id: int):
+    try:
+        raise TimeoutError("Socket connection timeout after 5.0s")
+    except TimeoutError as original_error:
+        raise DatabaseTimeoutError(f"Failed query for user {user_id}") from original_error
+
+try:
+    query_user_record(42)
+except DatabaseTimeoutError as err:
+    print(f"Caught: {err}")
+    print(f"Direct Cause: {err.__cause__}")`,
+        explanation: 'Custom exception hierarchies and explicit exception chaining using "raise ... from ...", preserving root cause diagnostics in production logs.',
+        expectedOutput: 'Caught: Failed query for user 42\nDirect Cause: Socket connection timeout after 5.0s',
+      },
       practiceExercises: [
         {
           id: 'ef-rt-ex1',
@@ -1493,6 +1864,9 @@ export const PYTHON_ERRORS_FILES_MAP: KnowledgeMap = {
         options: ['finally', 'else', 'except', 'catch'],
         correctIndex: 0,
         explanation: 'The finally block is unconditionally executed before leaving the try structure, making it ideal for cleanup.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'This block always executes for guaranteed resource cleanup.',
       },
       practiceQuestions: [
         {
@@ -1503,6 +1877,7 @@ export const PYTHON_ERRORS_FILES_MAP: KnowledgeMap = {
           difficulty: 'easy',
           type: 'mcq',
           explanation: 'The finally block is unconditionally executed before leaving the try structure, making it ideal for cleanup.',
+          hint: 'This block always executes for guaranteed resource cleanup.',
         },
         {
           id: 'ef-q2',
@@ -1513,6 +1888,7 @@ export const PYTHON_ERRORS_FILES_MAP: KnowledgeMap = {
           difficulty: 'medium',
           type: 'output_prediction',
           explanation: 'Because no exception is raised, the except block is skipped and the else block executes.',
+          hint: 'The else block in a try-except statement executes only if NO exceptions were raised in try.',
         },
         {
           id: 'ef-q3',
@@ -1527,6 +1903,48 @@ export const PYTHON_ERRORS_FILES_MAP: KnowledgeMap = {
           difficulty: 'challenging',
           type: 'debugging',
           explanation: 'A bare except: catches BaseException, which includes SystemExit and KeyboardInterrupt. Catching except Exception: is the correct practice.',
+          hint: 'A bare except catches BaseException, which includes OS signals meant to terminate the script.',
+        },
+        {
+          id: 'ef-q4',
+          question: 'What is returned by this function call with a finally clause?',
+          codeSnippet: 'def compute():\n    try:\n        return 10\n    finally:\n        return 20\nprint(compute())',
+          options: ['20', '10', '30', 'TypeError'],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'output_prediction',
+          explanation: 'When a return statement is encountered in try, the finally clause executes before the function exits. Since finally returns 20, that value overwrites the earlier return of 10.',
+          hint: 'The finally block executes immediately before leaving the function, and an explicit return in finally takes precedence.',
+        },
+        {
+          id: 'ef-q5',
+          question: "Why does 'except Exception:' NOT catch a user pressing Ctrl+C to terminate the program?",
+          options: [
+            'KeyboardInterrupt inherits directly from BaseException, not from Exception',
+            'Operating system signals cannot be intercepted by Python',
+            'Ctrl+C triggers a hardware reset that terminates the CPU thread immediately',
+            'KeyboardInterrupt is a warning, not an exception',
+          ],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'mcq',
+          explanation: 'BaseException is the root of the exception hierarchy. Exception, SystemExit, and KeyboardInterrupt are all direct subclasses of BaseException, so catching Exception deliberately leaves termination signals unhandled.',
+          hint: 'BaseException has three system-level subclasses outside of Exception: KeyboardInterrupt, SystemExit, and GeneratorExit.',
+        },
+        {
+          id: 'ef-q6',
+          question: 'In Python 3, what syntax explicitly links a caught exception as the causal root of a new exception?',
+          options: [
+            'raise NewException("message") from original_exception',
+            'raise NewException("message") with original_exception',
+            'raise NewException("message", cause=original_exception)',
+            'raise NewException.chained(original_exception)',
+          ],
+          correctIndex: 0,
+          difficulty: 'challenging',
+          type: 'debugging',
+          explanation: 'Using raise NewException(...) from orig_err sets __cause__ on the new exception, displaying a clear "The above exception was the direct cause of the following exception" traceback.',
+          hint: 'PEP 3134 introduced the keyword `from` for explicit exception chaining.',
         },
       ],
     },
@@ -1742,6 +2160,47 @@ export const PYTHON_OOP_MAP: KnowledgeMap = {
         explanation: 'Basic class definition, constructor, instance method, and instantiation.',
         expectedOutput: 'I am Atlas.',
       },
+      edgeCases: [
+        'Class attributes defined directly on the class body are shared across all instances; mutating a shared class list affects all instances.',
+        'Prefixing attributes with double underscores (__attr) triggers private name mangling (_ClassName__attr), not true security isolation.',
+        'Multiple inheritance diamond hierarchies resolve attribute lookups using C3 Linearization (the MRO).',
+      ],
+      intermediateExample: {
+        code: `# Encapsulation using @property getter and setter validation
+class Temperature:
+    def __init__(self, celsius: float):
+        self._celsius = celsius
+
+    @property
+    def celsius(self) -> float:
+        return self._celsius
+
+    @celsius.setter
+    def celsius(self, value: float):
+        if value < -273.15:
+            raise ValueError("Temperature below absolute zero!")
+        self._celsius = value
+
+temp = Temperature(25.0)
+temp.celsius = 30.0
+print("Current Celsius:", temp.celsius)`,
+        explanation: 'The @property decorator provides clean dot syntax with runtime validation guards.',
+        expectedOutput: 'Current Celsius: 30.0',
+      },
+      advancedExample: {
+        code: `# Memory optimization using __slots__
+class PointSlots:
+    __slots__ = ('x', 'y')
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+p = PointSlots(10, 20)
+print(f"Has __dict__: {hasattr(p, '__dict__')}")
+print(f"Coordinates: ({p.x}, {p.y})")`,
+        explanation: '__slots__ eliminates per-instance __dict__ allocations, drastically reducing memory for millions of instances.',
+        expectedOutput: 'Has __dict__: False\nCoordinates: (10, 20)',
+      },
       practiceExercises: [
         {
           id: 'oop-rt-ex1',
@@ -1762,6 +2221,9 @@ export const PYTHON_OOP_MAP: KnowledgeMap = {
         ],
         correctIndex: 0,
         explanation: 'When calling instance.method(), Python implicitly passes the instance itself as the first argument, customarily named "self".',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: '`self` connects the method to the specific instance calling it.',
       },
       practiceQuestions: [
         {
@@ -1777,6 +2239,7 @@ export const PYTHON_OOP_MAP: KnowledgeMap = {
           difficulty: 'easy',
           type: 'mcq',
           explanation: 'When calling instance.method(), Python implicitly passes the instance itself as the first argument, customarily named "self".',
+          hint: '`self` connects the method to the specific instance calling it.',
         },
         {
           id: 'oop-q2',
@@ -1787,6 +2250,7 @@ export const PYTHON_OOP_MAP: KnowledgeMap = {
           difficulty: 'medium',
           type: 'output_prediction',
           explanation: 'super().__init__() initializes self.x to 10 in the parent, then the child increments it by 5, giving 15.',
+          hint: '`super().__init__()` calls the parent constructor first.',
         },
         {
           id: 'oop-q3',
@@ -1801,6 +2265,53 @@ export const PYTHON_OOP_MAP: KnowledgeMap = {
           difficulty: 'challenging',
           type: 'debugging',
           explanation: 'Attributes defined on the class body are shared across all instances. Instance attributes must be initialized inside __init__ with self.items = [].',
+          hint: 'Class-level attributes belong to the class object itself, not separate instances.',
+        },
+        {
+          id: 'oop-q4',
+          question: 'How do you access a method decorated with `@property` on an instance `obj`?',
+          codeSnippet: 'class Circle:\n    def __init__(self, r):\n        self.r = r\n    @property\n    def diameter(self):\n        return self.r * 2\n\nc = Circle(5)\n# How is diameter accessed?',
+          options: [
+            'c.diameter (without parentheses, like a regular attribute)',
+            'c.diameter() (with mandatory parentheses)',
+            'c.get_diameter()',
+            'Circle.diameter(c)',
+          ],
+          correctIndex: 0,
+          difficulty: 'easy',
+          type: 'output_prediction',
+          explanation: 'The `@property` decorator transforms a getter method into a readable attribute accessed using standard dot notation without parentheses `c.diameter`.',
+          hint: '@property makes a method look and behave like a standard attribute.',
+        },
+        {
+          id: 'oop-q5',
+          question: 'What name mangling occurs when defining an attribute with two leading underscores `__balance` inside a class `Account`?',
+          options: [
+            '_Account__balance',
+            '__balance__',
+            '_balance',
+            'private_balance',
+          ],
+          correctIndex: 0,
+          explanation: 'CPython automatically prepends `_ClassName` to identifiers starting with two leading underscores (`_Account__balance`) to prevent namespace collisions in subclasses.',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'Python prepends an underscore and the class name to the mangled identifier.',
+        },
+        {
+          id: 'oop-q6',
+          question: 'Which algorithm does Python use to determine the Method Resolution Order (MRO) in multiple inheritance?',
+          options: [
+            'C3 Linearization algorithm',
+            'Depth-first search with cycles',
+            'Breadth-first left-to-right search',
+            'Dijkstra\'s shortest path algorithm',
+          ],
+          correctIndex: 0,
+          explanation: 'Python 2.3+ and Python 3 use the C3 Linearization algorithm to compute a deterministic, monotonic Method Resolution Order (MRO) for class hierarchies.',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'The algorithm guarantees monotonicity and respects local precedence ordering.',
         },
       ],
     },
@@ -1934,6 +2445,52 @@ export const PYTHON_ADVANCED_MAP: KnowledgeMap = {
         explanation: 'Generates Fibonacci numbers lazily using the yield statement.',
         expectedOutput: '[0, 1, 1, 2, 3, 5, 8]',
       },
+      edgeCases: [
+        'Generator iterators can only be consumed ONCE; once exhausted, subsequent for loops over them execute zero iterations without raising an error.',
+        'Decorators defined without @functools.wraps overwrite the target function\'s __name__, __doc__, and signature with generic wrapper attributes.',
+        'Synchronous blocking operations (e.g. time.sleep() or synchronous socket calls) freeze the single-threaded asyncio event loop, starving all concurrent tasks.',
+      ],
+      intermediateExample: {
+        code: `# Memory-efficient streaming generator pipeline
+def read_log_records(entries):
+    for raw in entries:
+        cleaned = raw.strip()
+        if cleaned:
+            yield cleaned.upper()
+
+def filter_errors(record_stream):
+    for record in record_stream:
+        if "ERROR" in record:
+            yield record
+
+raw_logs = ["  error: timeout  ", "info: ok", "  error: disk full  ", ""]
+pipeline = filter_errors(read_log_records(raw_logs))
+print("Matched Logs:", list(pipeline))`,
+        explanation: 'Composing generator pipelines processes infinite or large streaming data lazily in constant O(1) memory.',
+        expectedOutput: 'Matched Logs: [\'ERROR: TIMEOUT\', \'ERROR: DISK FULL\']',
+      },
+      advancedExample: {
+        code: `import asyncio
+
+# Asynchronous non-blocking task coordination via asyncio.gather
+async def fetch_metric(service: str, delay: float) -> str:
+    await asyncio.sleep(delay)
+    return f"{service} responding in {delay:.2f}s"
+
+async def main():
+    tasks = [
+        fetch_metric("AuthService", 0.05),
+        fetch_metric("BillingService", 0.08),
+        fetch_metric("SearchService", 0.02),
+    ]
+    results = await asyncio.gather(*tasks)
+    for r in results:
+        print(r)
+
+asyncio.run(main())`,
+        explanation: 'Non-blocking I/O multiplexing on the asyncio event loop using coroutines, await, and cooperative scheduling.',
+        expectedOutput: 'AuthService responding in 0.05s\nBillingService responding in 0.08s\nSearchService responding in 0.02s',
+      },
       practiceExercises: [
         {
           id: 'adv-rt-ex1',
@@ -1954,6 +2511,9 @@ export const PYTHON_ADVANCED_MAP: KnowledgeMap = {
         ],
         correctIndex: 0,
         explanation: 'Because generators compute values only when next() is called, they do not allocate storage for the entire sequence in memory.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Generators evaluate items lazily one item at a time rather than allocating a full sequence in RAM.',
       },
       practiceQuestions: [
         {
@@ -1969,6 +2529,7 @@ export const PYTHON_ADVANCED_MAP: KnowledgeMap = {
           difficulty: 'easy',
           type: 'mcq',
           explanation: 'Because generators compute values only when next() is called, they do not allocate storage for the entire sequence in memory.',
+          hint: 'Generators evaluate items lazily one item at a time rather than allocating a full sequence in RAM.',
         },
         {
           id: 'adv-q2',
@@ -1978,6 +2539,7 @@ export const PYTHON_ADVANCED_MAP: KnowledgeMap = {
           difficulty: 'medium',
           type: 'output_prediction',
           explanation: 'When a generator function terminates or returns, subsequent calls to next() raise the StopIteration exception.',
+          hint: 'The iterator protocol signals termination through a specific built-in exception.',
         },
         {
           id: 'adv-q3',
@@ -1992,6 +2554,48 @@ export const PYTHON_ADVANCED_MAP: KnowledgeMap = {
           difficulty: 'challenging',
           type: 'debugging',
           explanation: 'Without @wraps, the decorated function loses its identity and adopts the wrapper generic name "__name__ = wrapper" and empty docstring.',
+          hint: 'Without it, introspecting the decorated function reveals the wrapper function name instead of the original function name.',
+        },
+        {
+          id: 'adv-q4',
+          question: 'What is printed when attempting to iterate through this generator expression twice?',
+          codeSnippet: 'gen = (x * 2 for x in [1, 2, 3])\nlist1 = list(gen)\nlist2 = list(gen)\nprint(list1, list2)',
+          options: ['[2, 4, 6] []', '[2, 4, 6] [2, 4, 6]', 'StopIteration error', '[2, 4, 6] None'],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'output_prediction',
+          explanation: 'Generators produce values on demand and maintain an internal iteration pointer. Once the generator reaches the end, subsequent attempts to consume it produce an empty list [].',
+          hint: 'Generators are one-way lazy iterators that do not rewind or buffer past items in memory.',
+        },
+        {
+          id: 'adv-q5',
+          question: 'What does the "yield from <iterable>" syntax accomplish inside a Python generator?',
+          options: [
+            'Delegates generation to another iterable or sub-generator transparently',
+            'Imports a generator from an external module',
+            'Terminates the generator and yields a return value',
+            'Creates a deep copy of the iterable in memory',
+          ],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'mcq',
+          explanation: '`yield from` establishes a transparent bidirectional channel between the caller and a sub-generator, forwarding yielded values and received send/throw signals.',
+          hint: 'It transparently forwards all items from a sub-iterable or sub-generator to the caller.',
+        },
+        {
+          id: 'adv-q6',
+          question: 'Which of the following calls dangerously freezes all concurrent tasks in an asyncio application?',
+          options: [
+            'time.sleep(5)',
+            'await asyncio.sleep(5)',
+            'await asyncio.gather(...)',
+            'asyncio.create_task(...)',
+          ],
+          correctIndex: 0,
+          difficulty: 'challenging',
+          type: 'debugging',
+          explanation: 'Synchronous blocking calls like time.sleep() block the entire OS thread, preventing the asyncio event loop from switching context to any other scheduled coroutines. Always use non-blocking await asyncio.sleep().',
+          hint: 'Asyncio operates cooperatively on a single operating system thread by default.',
         },
       ],
     },
@@ -2141,6 +2745,60 @@ export const PYTHON_PROJECTS_MAP: KnowledgeMap = {
         explanation: 'Clean report formatting utility separating data representation from output rendering.',
         expectedOutput: '=== SALES ===\nUnits       : 140\nRevenue     : $2,800',
       },
+      edgeCases: [
+        'Direct dictionary indexing on os.environ[KEY] raises KeyError if the environment variable is not defined; use os.environ.get(KEY, default) or os.getenv() for safe fallbacks.',
+        'Hardcoding OS-specific path separators ("\\\\" vs "/") breaks portability between Windows and Linux/macOS; use pathlib.Path or the "/" operator.',
+        'Writing files without proper context managers can leave unwritten buffers on sudden process exit or power failure.',
+      ],
+      intermediateExample: {
+        code: `from pathlib import Path
+
+# Clean file directory inspection utility using pathlib
+def inspect_directory_files(dir_path: str = ".") -> dict:
+    """Tally files by extension in directory."""
+    root = Path(dir_path)
+    summary = {"total_files": 0, "extensions": {}}
+    if not root.is_dir():
+        return summary
+
+    for entry in root.iterdir():
+        if entry.is_file():
+            summary["total_files"] += 1
+            ext = entry.suffix.lower() or ".none"
+            summary["extensions"][ext] = summary["extensions"].get(ext, 0) + 1
+    return summary
+
+print("Project Files:", inspect_directory_files("."))`,
+        explanation: 'Object-oriented filesystem traversal using pathlib.Path and directory iteration.',
+        expectedOutput: 'Project Files: {\'total_files\': 3, \'extensions\': {\'.py\': 2, \'.json\': 1}}',
+      },
+      advancedExample: {
+        code: `import os
+from dataclasses import dataclass
+
+# Production configuration manager with dataclasses and env validation
+@dataclass(frozen=True)
+class AppConfig:
+    app_env: str
+    port: int
+    debug: bool
+
+    @classmethod
+    def from_env(cls) -> "AppConfig":
+        env = os.getenv("APP_ENV", "development").lower()
+        port_raw = os.getenv("PORT", "8000")
+        try:
+            port = int(port_raw)
+        except ValueError:
+            port = 8000
+        debug = env in ("development", "staging")
+        return cls(app_env=env, port=port, debug=debug)
+
+config = AppConfig.from_env()
+print(f"Loaded Config: env={config.app_env}, port={config.port}, debug={config.debug}")`,
+        explanation: 'Immutable configuration object built from runtime environment variables with defensive type casting and fallbacks.',
+        expectedOutput: 'Loaded Config: env=development, port=8000, debug=True',
+      },
       practiceExercises: [
         {
           id: 'proj-rt-ex1',
@@ -2156,6 +2814,9 @@ export const PYTHON_PROJECTS_MAP: KnowledgeMap = {
         options: ['argparse', 'cli_parser', 'terminal', 'cmdline'],
         correctIndex: 0,
         explanation: 'argparse is Python’s standard library module for parsing CLI arguments, flags, and help menus.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'This standard library module generates CLI help flags (--help) and parses sys.argv.',
       },
       practiceQuestions: [
         {
@@ -2166,6 +2827,7 @@ export const PYTHON_PROJECTS_MAP: KnowledgeMap = {
           difficulty: 'easy',
           type: 'mcq',
           explanation: 'argparse is Python’s standard library module for parsing CLI arguments, flags, and help menus.',
+          hint: 'This standard library module generates CLI help flags (--help) and parses sys.argv.',
         },
         {
           id: 'prj-q2',
@@ -2180,6 +2842,7 @@ export const PYTHON_PROJECTS_MAP: KnowledgeMap = {
           difficulty: 'medium',
           type: 'mcq',
           explanation: 'Sensitive credentials must always be stored in environment variables and never checked into source control.',
+          hint: 'Environment variables keep secrets isolated from the codebase and out of version control.',
         },
         {
           id: 'prj-q3',
@@ -2194,6 +2857,52 @@ export const PYTHON_PROJECTS_MAP: KnowledgeMap = {
           difficulty: 'challenging',
           type: 'debugging',
           explanation: 'The __name__ variable equals "__main__" only when the script is run directly from the terminal, allowing files to be both runnable scripts and importable modules.',
+          hint: 'When a Python file is imported by another script, __name__ is set to the module name instead.',
+        },
+        {
+          id: 'prj-q4',
+          question: 'What operator does Python\'s pathlib.Path overload to join path segments cross-platform?',
+          options: [
+            'The division operator (/)',
+            'The addition operator (+)',
+            'The bitwise or operator (|)',
+            'The modulo operator (%)',
+          ],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'mcq',
+          explanation: 'pathlib.Path overloads the forward-slash / operator so expressions like Path("data") / "sub" / "file.txt" work consistently on Windows, Linux, and macOS.',
+          hint: 'Path("folder") / "file.txt" joins paths naturally.',
+        },
+        {
+          id: 'prj-q5',
+          question: 'Why is os.environ.get("PORT", 8000) preferred over os.environ["PORT"] for service configuration?',
+          options: [
+            'os.environ.get returns a safe default without raising KeyError when PORT is unset',
+            'os.environ.get automatically parses strings into integers',
+            'Direct indexing on os.environ is deprecated in Python 3',
+            'os.environ.get encrypts the variable value in memory',
+          ],
+          correctIndex: 0,
+          difficulty: 'medium',
+          type: 'debugging',
+          explanation: 'Accessing os.environ[key] directly crashes with KeyError if the variable was not provided by the environment. get(key, default) falls back gracefully.',
+          hint: 'Direct dictionary indexing crashes if the key is missing from the environment dictionary.',
+        },
+        {
+          id: 'prj-q6',
+          question: 'What is the primary technical benefit of using "python -m venv .venv" in a project?',
+          options: [
+            'It creates an isolated directory with its own Python binary and site-packages to prevent dependency version conflicts',
+            'It compiles Python code into native machine code for faster execution',
+            'It runs Python scripts inside a Docker container automatically',
+            'It eliminates the need to install pip packages',
+          ],
+          correctIndex: 0,
+          difficulty: 'challenging',
+          type: 'mcq',
+          explanation: 'Virtual environments isolate packages into a local .venv/lib/site-packages directory, preventing version collisions between different projects sharing the same host machine.',
+          hint: 'Virtual environments prevent packages installed for one project from breaking other projects on the same machine.',
         },
       ],
     },

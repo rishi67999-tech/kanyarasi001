@@ -1,5 +1,14 @@
-import { useState } from 'react'
-import { X, BookOpen, Search, ArrowRight, Sparkles } from 'lucide-react'
+import { useState, useRef } from 'react'
+import {
+  X,
+  BookOpen,
+  Search,
+  ArrowRight,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+} from 'lucide-react'
 import { PYTHON_CURRICULUM_CATEGORIES } from '../../data/pythonCurriculum'
 
 interface CurriculumCatalogModalProps {
@@ -15,21 +24,55 @@ export function CurriculumCatalogModal({
 }: CurriculumCatalogModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('all')
+  const categoryScrollRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   if (!isOpen) return null
 
+  const isSearching = searchTerm.trim().length > 0
+
   const filteredCategories = PYTHON_CURRICULUM_CATEGORIES.map((cat) => {
-    const matchingTopics = cat.topics.filter(
-      (t) =>
-        t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.query.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const matchingTopics = cat.topics.filter((t) => {
+      if (!isSearching) return true
+      const term = searchTerm.toLowerCase().trim()
+      return (
+        t.title.toLowerCase().includes(term) ||
+        t.description.toLowerCase().includes(term) ||
+        t.query.toLowerCase().includes(term)
+      )
+    })
     return { ...cat, topics: matchingTopics }
   }).filter((cat) => {
-    if (activeCategory !== 'all' && cat.key !== activeCategory) return false
+    if (!isSearching && activeCategory !== 'all' && cat.key !== activeCategory) {
+      return false
+    }
+    if (isSearching && activeCategory !== 'all' && cat.key !== activeCategory) {
+      return false
+    }
     return cat.topics.length > 0
   })
+
+  const totalMatchingTopics = filteredCategories.reduce(
+    (acc, cat) => acc + cat.topics.length,
+    0
+  )
+
+  const totalCatalogTopics = PYTHON_CURRICULUM_CATEGORIES.reduce(
+    (acc, cat) => acc + cat.topics.length,
+    0
+  )
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -240 : 240
+      categoryScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
+
+  const handleClearSearch = () => {
+    setSearchTerm('')
+    searchInputRef.current?.focus()
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 md:p-6 select-none animate-in fade-in duration-200">
@@ -48,6 +91,9 @@ export function CurriculumCatalogModal({
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
                   14 CATEGORIES
                 </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 hidden sm:inline">
+                  {totalCatalogTopics} TOPICS
+                </span>
               </div>
               <p className="text-xs text-slate-400">
                 Explore structured topics from fundamentals to advanced algorithms in 3D.
@@ -55,63 +101,160 @@ export function CurriculumCatalogModal({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition"
-            title="Close (Esc)"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => searchInputRef.current?.focus()}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-slate-800 transition flex items-center gap-1.5 text-xs font-mono"
+              title="Focus Search"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Search</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition"
+              title="Close (Esc)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Search & Category Filter Bar */}
-        <div className="p-4 border-b border-slate-800/80 bg-black/20 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-          {/* Search Input */}
+        {/* Search Row */}
+        <div className="p-3 md:px-5 md:py-3.5 border-b border-slate-800/80 bg-black/25 flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-cyan-400" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search topics (e.g. lists, recursion, decorators, slicing)..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#090b12] border border-slate-800 text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-500/60 transition"
+              placeholder="Search topics across all 14 categories (e.g. lists, recursion, decorators, slicing)..."
+              className="w-full pl-9 pr-9 py-2 rounded-xl bg-[#090b12] border border-slate-800 text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-500/60 transition"
               autoFocus
             />
+            {isSearching && (
+              <button
+                onClick={handleClearSearch}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          {/* Quick Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 font-mono text-[11px] shrink-0">
+          {isSearching && (
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/70 border border-cyan-800/60 text-cyan-300 text-[11px] font-mono whitespace-nowrap">
+              <span>{totalMatchingTopics} found</span>
+            </div>
+          )}
+
+          {isSearching && activeCategory !== 'all' && (
             <button
               onClick={() => setActiveCategory('all')}
-              className={`px-2.5 py-1.5 rounded-lg transition whitespace-nowrap ${
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-mono whitespace-nowrap transition"
+              title="Show results from all categories"
+            >
+              Search All Categories
+            </button>
+          )}
+        </div>
+
+        {/* Horizontal Category Scrolling Navigation (A, B, C, D... up to N) */}
+        <div className="px-3 md:px-5 py-2.5 border-b border-slate-800/80 bg-black/40 flex items-center gap-1.5">
+          {/* Scroll Left Button */}
+          <button
+            onClick={() => scrollCategories('left')}
+            className="p-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-cyan-300 transition shrink-0 shadow-sm"
+            title="Scroll categories left"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {/* Scrollable Category Pills Track */}
+          <div
+            ref={categoryScrollRef}
+            onWheel={(e) => {
+              if (e.deltaY !== 0 && categoryScrollRef.current) {
+                categoryScrollRef.current.scrollLeft += e.deltaY
+              }
+            }}
+            className="flex items-center gap-1.5 overflow-x-auto scroll-smooth py-1 px-0.5 scrollbar-none no-scrollbar flex-1 font-mono text-[11px]"
+          >
+            <button
+              onClick={() => setActiveCategory('all')}
+              className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                 activeCategory === 'all'
-                  ? 'bg-cyan-950 text-cyan-200 border border-cyan-500/40 font-semibold'
-                  : 'bg-black/40 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-cyan-950 text-cyan-200 border border-cyan-500/50 font-semibold shadow-sm shadow-cyan-900/20'
+                  : 'bg-[#090b12] text-slate-400 hover:text-slate-200 border border-slate-800'
               }`}
             >
-              All Topics
+              <span>All Topics</span>
+              <span className="text-[9px] px-1 py-0.2 rounded bg-black/40 text-slate-400">
+                {totalCatalogTopics}
+              </span>
             </button>
-            {PYTHON_CURRICULUM_CATEGORIES.map((c) => (
-              <button
-                key={c.key}
-                onClick={() => setActiveCategory(c.key)}
-                className={`px-2 py-1.5 rounded-lg transition whitespace-nowrap ${
-                  activeCategory === c.key
-                    ? 'bg-cyan-950 text-cyan-200 border border-cyan-500/40 font-semibold'
-                    : 'bg-black/40 text-slate-400 hover:text-slate-200 border border-slate-800'
-                }`}
-              >
-                {c.letter}. {c.title.split(' ')[0]}
-              </button>
-            ))}
+
+            {PYTHON_CURRICULUM_CATEGORIES.map((c) => {
+              const isActive = activeCategory === c.key
+              return (
+                <button
+                  key={c.key}
+                  onClick={() => setActiveCategory(c.key)}
+                  className={`px-2.5 py-1.5 rounded-lg transition whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-cyan-950 text-cyan-200 border border-cyan-500/50 font-semibold shadow-sm shadow-cyan-900/20'
+                      : 'bg-[#090b12] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  }`}
+                  title={`${c.letter}. ${c.title}`}
+                >
+                  <span
+                    className={`w-4 h-4 rounded text-[9px] flex items-center justify-center font-bold ${
+                      isActive ? 'bg-cyan-800 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {c.letter}
+                  </span>
+                  <span>{c.title}</span>
+                  <span className="text-[9px] px-1 py-0.2 rounded bg-black/40 text-slate-400">
+                    {c.topics.length}
+                  </span>
+                </button>
+              )
+            })}
           </div>
+
+          {/* Scroll Right Button */}
+          <button
+            onClick={() => scrollCategories('right')}
+            className="p-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-cyan-300 transition shrink-0 shadow-sm"
+            title="Scroll categories right"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Topics List Container */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
           {filteredCategories.length === 0 ? (
-            <div className="text-center py-12 text-slate-500 font-mono text-xs">
-              No matching curriculum topics found. Try searching for a different keyword or enter any custom question in the main search bar!
+            <div className="text-center py-14 px-4 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-center mx-auto text-slate-500">
+                <Search className="w-6 h-6" />
+              </div>
+              <p className="text-slate-300 font-medium text-sm">
+                No matching curriculum topics found for &ldquo;{searchTerm}&rdquo;
+              </p>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                Try searching for a different keyword or click below to view all topics across the 14 categories.
+              </p>
+              <button
+                onClick={handleClearSearch}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-800/80 text-cyan-300 text-xs font-mono transition"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Search Filter</span>
+              </button>
             </div>
           ) : (
             filteredCategories.map((category) => (
@@ -136,15 +279,15 @@ export function CurriculumCatalogModal({
                         onSelectTopic(topic.query)
                         onClose()
                       }}
-                      className="p-3 rounded-xl bg-[#090b12] hover:bg-slate-900/90 border border-slate-800/80 hover:border-cyan-500/60 text-left transition group flex items-start justify-between gap-3"
+                      className="p-3 rounded-xl bg-[#090b12] hover:bg-slate-900/90 border border-slate-800/80 hover:border-cyan-500/60 text-left transition group flex items-start justify-between gap-3 shadow-sm hover:shadow-cyan-950/20"
                     >
-                      <div className="space-y-1 flex-1">
+                      <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-xs text-slate-100 group-hover:text-cyan-200 transition">
+                          <span className="font-semibold text-xs text-slate-100 group-hover:text-cyan-200 transition truncate">
                             {topic.title}
                           </span>
                           <span
-                            className={`text-[9px] font-mono px-1.5 py-0.2 rounded border ${
+                            className={`text-[9px] font-mono px-1.5 py-0.2 rounded border shrink-0 ${
                               topic.difficulty === 'Beginner'
                                 ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/50'
                                 : topic.difficulty === 'Intermediate'
@@ -172,14 +315,14 @@ export function CurriculumCatalogModal({
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-slate-800/80 bg-black/40 flex items-center justify-between text-xs font-mono text-slate-400">
+        <div className="p-3 md:px-5 border-t border-slate-800/80 bg-black/40 flex items-center justify-between text-xs font-mono text-slate-400">
           <div className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Select any topic to materialize its 3D knowledge skeleton</span>
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span className="truncate">Select any topic to materialize its 3D knowledge skeleton</span>
           </div>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-[11px]"
+            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-[11px] shrink-0"
           >
             Close Catalog
           </button>

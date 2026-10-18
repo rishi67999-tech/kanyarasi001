@@ -24,9 +24,9 @@ export const PYTHON_VARIABLES_MAP: KnowledgeMap = {
       beginnerExplanation:
         'Think of a variable as a sticky note or luggage tag attached to a box. The box holds the data (like a number or word), and the tag lets you find and use that data later.',
       intermediateExplanation:
-        'In Python, variables do not store values directly inside buckets. Instead, every variable is a reference (pointer) to a Python object allocated in heap memory.',
+        'Variables do not reserve static typed slots. Rather, names are bound in the current local or global symbol table dictionary (namespace), mapping identifier strings to PyObject pointers.',
       advancedDetails:
-        'Variables exist as entries in the local or global namespace dictionary (`locals()`, `globals()`). The PyObject structure maintains a reference count (`ob_refcnt`) to govern garbage collection.',
+        'CPython optimizes local variable access using the fast-locals array (LOAD_FAST and STORE_FAST opcodes) indexed by integer offsets determined at compile time rather than performing dictionary lookups.',
       whyItMatters:
         'Variables allow programs to store, retrieve, and transform state dynamically. Without variables, programs could only compute static, hardcoded numbers.',
       practicalUseCases: [
@@ -93,6 +93,33 @@ export const PYTHON_VARIABLES_MAP: KnowledgeMap = {
           ],
         },
       },
+      edgeCases: [
+        'Rebinding a variable creates a new reference; it does not overwrite the old object if other references point to it.',
+        'CPython interns small integers (-5 to 256) and ASCII identifier strings, so `a is b` evaluates to True for those values.',
+        'In-place modification of mutable objects (x += [1]) alters the underlying object in place, affecting all aliased variables.',
+      ],
+      intermediateExample: {
+        code: `# Object aliasing vs independent copy
+original = [1, 2, 3]
+alias = original           # points to the SAME list
+clone = original.copy()    # creates a NEW list in memory
+
+alias.append(4)
+print(f"Original: {original}")
+print(f"Clone:    {clone}")`,
+        explanation: 'Mutating via `alias` changes `original`, but `clone` remains completely isolated.',
+        expectedOutput: 'Original: [1, 2, 3, 4]\nClone:    [1, 2, 3]',
+      },
+      advancedExample: {
+        code: `import sys
+
+# Inspect reference counts and memory addresses
+x = "antigravity_unique_string"
+print(f"Memory address: {hex(id(x))}")
+print(f"Refcount: {sys.getrefcount(x) - 1}") # subtract getrefcount temporary ref`,
+        explanation: 'Every Python variable references a PyObject containing refcount and ob_type pointers.',
+        expectedOutput: 'Memory address: 0x..., Refcount: 1',
+      },
       practiceQuestion: {
         question: 'In Python, what happens when you write `x = 5` then `x = "hello"`?',
         options: [
@@ -104,7 +131,107 @@ export const PYTHON_VARIABLES_MAP: KnowledgeMap = {
         correctIndex: 1,
         explanation:
           'Python is dynamically typed: variable names are simply references, and can be freely rebound to objects of different types.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Python variables are name tags, not typed memory boxes.',
       },
+      practiceQuestions: [
+        {
+          id: 'q-var-1',
+          question: 'In Python, what happens when you write `x = 5` then `x = "hello"`?',
+          options: [
+            'Python throws a TypeError because x already has an integer type',
+            'The variable x is rebound to a new string object "hello"',
+            'The number 5 is converted into the string "5"',
+            'The program creates two separate variables named x',
+          ],
+          correctIndex: 1,
+          explanation:
+            'Python is dynamically typed: variable names are simply references, and can be freely rebound to objects of different types.',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'Python variables are name tags, not typed memory boxes.',
+        },
+        {
+          id: 'q-var-2',
+          question: 'What is the output of this Python simultaneous assignment?',
+          codeSnippet: `a, b = 1, 2\na, b = b, a\nprint(f"{a} {b}")`,
+          options: ['2 1', '1 2', '2 2', '1 1'],
+          correctIndex: 0,
+          explanation:
+            'Python evaluates all right-hand side expressions first into a temporary tuple (2, 1) before unpacking and assigning to a and b, enabling swap without a temp variable.',
+          difficulty: 'easy',
+          type: 'output_prediction',
+          hint: 'Right side evaluates completely into a temporary tuple before assignment occurs.',
+        },
+        {
+          id: 'q-var-3',
+          question: 'What will be printed by the following code demonstrating aliasing?',
+          codeSnippet: `a = [10, 20]\nb = a\nb.append(30)\nprint(a)`,
+          options: [
+            '[10, 20, 30]',
+            '[10, 20]',
+            '[30]',
+            'TypeError: list aliasing forbidden',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Both `a` and `b` reference the exact same list in heap memory (`a is b` is True). Mutating the list via `b` reflects when inspecting `a`.',
+          difficulty: 'medium',
+          type: 'output_prediction',
+          hint: 'Remember: assignment copies the object reference, not the list contents.',
+        },
+        {
+          id: 'q-var-4',
+          question: 'Identify the error that occurs when running this function:',
+          codeSnippet: `total = 100\ndef add_tax():\n    total += 10\n    return total\nadd_tax()`,
+          options: [
+            'UnboundLocalError: local variable "total" referenced before assignment',
+            'NameError: global total is read-only',
+            'TypeError: unsupported operand for integer and function',
+            'The code runs cleanly and returns 110',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Because `total` is assigned within `add_tax` (`+=`), Python marks `total` as a local variable. Trying to read it before local assignment triggers UnboundLocalError unless `global total` is declared.',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'In-place assignment inside a function causes Python to treat the variable as local.',
+        },
+        {
+          id: 'q-var-5',
+          question: 'What is the output of this conditional using the walrus operator `:=`?',
+          codeSnippet: `text = "Knowledge"\nif (n := len(text)) > 5:\n    print(f"Length is {n}")`,
+          options: [
+            'Length is 9',
+            'Length is 5',
+            'True',
+            'SyntaxError',
+          ],
+          correctIndex: 0,
+          explanation:
+            'The walrus operator `:=` assigns `len("Knowledge")` (which is 9) to `n` within the expression and returns 9. Since 9 > 5 is True, the body prints "Length is 9".',
+          difficulty: 'challenging',
+          type: 'output_prediction',
+          hint: 'The walrus operator assigns and returns the value in a single expression.',
+        },
+        {
+          id: 'q-var-6',
+          question: 'Why does `a = 256; b = 256; a is b` evaluate to True in CPython, but `a = 9999; b = 9999; a is b` may evaluate to False?',
+          options: [
+            'CPython pre-allocates and interns small integer objects from -5 to 256',
+            'Numbers above 1000 are allocated on the GPU rather than the CPU heap',
+            'Large integers use 128-bit IEEE arithmetic which disables pointer comparisons',
+            'The `is` operator is deprecated for integers above 256 in Python 3.10+',
+          ],
+          correctIndex: 0,
+          explanation:
+            'CPython caches small integers in the range [-5, 256] at startup. Any reference to these values shares the same pre-allocated singleton PyObject in memory.',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'CPython optimizes frequently used small numbers with an internal global array.',
+        },
+      ],
     },
     {
       id: 'node-var-assignment',
@@ -329,12 +456,129 @@ export const PYTHON_LISTS_MAP: KnowledgeMap = {
           ],
         },
       },
+      edgeCases: [
+        'List multiplication with nested lists (`[[0]*3]*3`) creates 3 references to the SAME inner list.',
+        '`.sort()` modifies in place and returns `None`; `sorted()` returns a new list without touching the input.',
+        'Inserting at index 0 requires shifting all N pointers in memory, taking O(N) linear time compared to O(1) append.',
+      ],
+      intermediateExample: {
+        code: `# Slicing, filtering, and reversing a list
+data = [10, 25, 30, 45, 50, 65]
+even_indices = data[::2]        # [10, 30, 50]
+reversed_copy = data[::-1]      # [65, 50, 45, 30, 25, 10]
+print("Evens:", even_indices)
+print("Reversed:", reversed_copy[:3])`,
+        explanation: 'Extended slice syntax [start:stop:step] creates fast, optimized copies of sub-sequences.',
+        expectedOutput: 'Evens: [10, 30, 50]\nReversed: [65, 50, 45]',
+      },
+      advancedExample: {
+        code: `import sys
+
+# Inspect dynamic array growth and memory over-allocation
+items = []
+sizes = []
+for i in range(10):
+    sizes.append((len(items), sys.getsizeof(items)))
+    items.append(i)
+
+print("Length vs Allocated Bytes (first 5):", sizes[:5])`,
+        explanation: 'CPython over-allocates list capacity in geometric jumps to achieve O(1) amortized append time.',
+        expectedOutput: 'Length vs Allocated Bytes (first 5): [(0, 56), (1, 88), (2, 88), (3, 88), (4, 88)]',
+      },
       practiceQuestion: {
         question: 'What is the index of the first element in a Python list?',
         options: ['1', '0', '-1', 'null'],
         correctIndex: 1,
         explanation: 'Python uses zero-based indexing: the first item is always at index 0.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Like most modern languages, Python counts sequence positions starting from zero.',
       },
+      practiceQuestions: [
+        {
+          id: 'q-list-1',
+          question: 'What is the index of the first element in a Python list?',
+          options: ['1', '0', '-1', 'null'],
+          correctIndex: 1,
+          explanation: 'Python uses zero-based indexing: the first item is always at index 0.',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'Python starts counting element positions from zero.',
+        },
+        {
+          id: 'q-list-2',
+          question: 'What is the output of `nums[-1]` on a non-empty list `[10, 20, 30]`?',
+          options: ['30', '10', 'IndexError', '-30'],
+          correctIndex: 0,
+          explanation:
+            'Negative indices in Python count backwards from the end of the sequence. `-1` always retrieves the final element.',
+          difficulty: 'easy',
+          type: 'output_prediction',
+          hint: 'Negative indices wrap around from the end: -1 is the last item.',
+        },
+        {
+          id: 'q-list-3',
+          question: 'What is the output of this slice with step 2?',
+          codeSnippet: `nums = [0, 1, 2, 3, 4, 5]\nprint(nums[1:5:2])`,
+          options: ['[1, 3]', '[1, 2, 3, 4]', '[0, 2, 4]', '[2, 4]'],
+          correctIndex: 0,
+          explanation:
+            'The slice starts at index 1 (value 1), steps by 2 (next index 3, value 3), and stops before index 5.',
+          difficulty: 'medium',
+          type: 'output_prediction',
+          hint: 'Start at index 1, add step 2: index 1 and index 3.',
+        },
+        {
+          id: 'q-list-4',
+          question: 'Identify the subtle bug in this 2D matrix initialization:',
+          codeSnippet: `grid = [[0] * 2] * 2\ngrid[0][0] = 99\nprint(grid)`,
+          options: [
+            'All rows share the same inner list reference, resulting in [[99, 0], [99, 0]]',
+            'Python raises TypeError: 2D lists cannot use multiplication',
+            'Only grid[0][0] is changed, printing [[99, 0], [0, 0]]',
+            'The matrix becomes a 1D list [99, 0, 0, 0]',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Multiplying `[[0] * 2] * 2` copies the reference to the same inner list twice. Modifying row 0 mutates row 1 simultaneously. Use `[[0]*2 for _ in range(2)]` instead.',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'The outer multiplication duplicates list references, not independent copies.',
+        },
+        {
+          id: 'q-list-5',
+          question: 'What does `print(res, nums)` output in the following snippet?',
+          codeSnippet: `nums = [3, 1, 2]\nres = nums.sort()\nprint(res, nums)`,
+          options: [
+            'None [1, 2, 3]',
+            '[1, 2, 3] [1, 2, 3]',
+            '[1, 2, 3] [3, 1, 2]',
+            'None [3, 1, 2]',
+          ],
+          correctIndex: 0,
+          explanation:
+            '`list.sort()` sorts the list in place and returns `None` by design to signal mutation. The original list `nums` is updated to [1, 2, 3].',
+          difficulty: 'challenging',
+          type: 'output_prediction',
+          hint: 'In-place mutating methods in Python typically return None.',
+        },
+        {
+          id: 'q-list-6',
+          question: 'What is the time complexity of `list.append(x)` versus `list.insert(0, x)` in Python?',
+          options: [
+            'append is O(1) amortized, while insert(0) is O(N) linear because all existing elements must shift right in memory',
+            'Both operations are O(1) constant time',
+            'Both operations are O(N) linear time',
+            'append is O(N) and insert(0) is O(1)',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Lists are contiguous dynamic arrays. Appending adds to the end in O(1) amortized time, whereas inserting at position 0 forces CPython to shift every pointer by one offset (memmove).',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'Consider how contiguous array memory must be reordered when inserting at the beginning.',
+        },
+      ],
     },
     {
       id: 'node-list-indexing',
@@ -536,12 +780,131 @@ export const PYTHON_FUNCTIONS_MAP: KnowledgeMap = {
           ],
         },
       },
+      edgeCases: [
+        'Default argument expressions evaluate ONCE at function definition time, not on every call (the mutable default trap).',
+        'Functions without an explicit return statement return `None` implicitly upon completing the final instruction.',
+        'LEGB scope resolution: assigning to a name inside a function shadows enclosing names unless declared `global` or `nonlocal`.',
+      ],
+      intermediateExample: {
+        code: `# Higher-order function taking a callback comparator
+def filter_and_transform(items, predicate, transform):
+    return [transform(x) for x in items if predicate(x)]
+
+nums = [1, 2, 3, 4, 5, 6]
+evens_squared = filter_and_transform(nums, lambda x: x % 2 == 0, lambda x: x ** 2)
+print("Evens squared:", evens_squared)`,
+        explanation: 'Passing lambdas and functions as first-class citizens into higher-order processors.',
+        expectedOutput: 'Evens squared: [4, 16, 36]',
+      },
+      advancedExample: {
+        code: `# Closures preserving lexical scope and closure cells
+def create_rate_limiter(max_per_sec):
+    calls = []
+    def allow_call(timestamp):
+        nonlocal calls
+        calls = [t for t in calls if timestamp - t < 1.0]
+        if len(calls) < max_per_sec:
+            calls.append(timestamp)
+            return True
+        return False
+    return allow_call
+
+limiter = create_rate_limiter(2)
+print([limiter(0.1), limiter(0.2), limiter(0.3)])`,
+        explanation: 'Enclosing state maintained inside the __closure__ tuple across invocations.',
+        expectedOutput: '[True, True, False]',
+      },
       practiceQuestion: {
         question: 'What is the return value of a Python function that does not contain a return statement?',
         options: ['0', 'False', 'None', 'An Empty String'],
         correctIndex: 2,
         explanation: 'In Python, any function that completes execution without a return statement implicitly returns None.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Python functions always produce an object return, defaulting to the singleton None.',
       },
+      practiceQuestions: [
+        {
+          id: 'q-func-1',
+          question: 'What is the return value of a Python function that does not contain a return statement?',
+          options: ['0', 'False', 'None', 'An Empty String'],
+          correctIndex: 2,
+          explanation:
+            'In Python, any function that completes execution without a return statement implicitly returns None.',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'Python functions always return an object, defaulting to None.',
+        },
+        {
+          id: 'q-func-2',
+          question: 'What does this function call with keyword arguments output?',
+          codeSnippet: `def calc(x, y=5):\n    return x * y\nprint(calc(y=2, x=3))`,
+          options: ['6', '15', '10', 'TypeError: arguments passed out of order'],
+          correctIndex: 0,
+          explanation:
+            'Keyword arguments can be provided in any order: x receives 3 and y receives 2, returning 3 * 2 = 6.',
+          difficulty: 'easy',
+          type: 'output_prediction',
+          hint: 'Keyword arguments bind by parameter name, regardless of position.',
+        },
+        {
+          id: 'q-func-3',
+          question: 'What is the output of calling this function twice with a mutable default argument?',
+          codeSnippet: `def append_item(val, target=[]):\n    target.append(val)\n    return target\n\nappend_item("a")\nprint(append_item("b"))`,
+          options: [
+            "['a', 'b']",
+            "['b']",
+            "['a']",
+            'TypeError: mutable default forbidden',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Default argument expressions are evaluated once when the function is defined. The list `target` is reused across all subsequent calls, accumulating ["a", "b"].',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'Default values in Python are created only once when `def` executes.',
+        },
+        {
+          id: 'q-func-4',
+          question: 'What does the `*args` syntax pack positional arguments into?',
+          codeSnippet: `def count_items(*args):\n    return type(args).__name__\nprint(count_items(1, 2, 3))`,
+          options: ['tuple', 'list', 'dict', 'generator'],
+          correctIndex: 0,
+          explanation:
+            'In Python, `*args` packs variable positional parameters into an immutable `tuple`.',
+          difficulty: 'medium',
+          type: 'output_prediction',
+          hint: 'Variable positional arguments are stored in an immutable sequence container.',
+        },
+        {
+          id: 'q-func-5',
+          question: 'What is the output of this closure factory function?',
+          codeSnippet: `def make_multiplier(factor):\n    return lambda x: x * factor\n\ndouble = make_multiplier(2)\nprint(double(7))`,
+          options: ['14', '7', '49', 'NameError: factor not defined in lambda'],
+          correctIndex: 0,
+          explanation:
+            'The returned lambda forms a closure capturing `factor=2` from the enclosing scope. Calling `double(7)` evaluates 7 * 2 = 14.',
+          difficulty: 'challenging',
+          type: 'output_prediction',
+          hint: 'Inner functions retain access to outer function variables via closures.',
+        },
+        {
+          id: 'q-func-6',
+          question: 'Where does CPython inspect the compiled bytecode and parameter metadata of a user function `my_func`?',
+          options: [
+            'In the `my_func.__code__` code object attribute',
+            'In the `sys.call_stack` operating system register',
+            'Inside `my_func.__dict__` only',
+            'Python functions cannot be inspected at runtime',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Functions expose a `__code__` attribute (CodeType object) storing bytecode (`co_code`), argument count (`co_argcount`), local variable names (`co_varnames`), and constants (`co_consts`).',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'Look for the special dunder attribute storing bytecode metadata.',
+        },
+      ],
     },
     {
       id: 'node-func-params',
@@ -771,6 +1134,42 @@ export const RECURSION_MAP: KnowledgeMap = {
           ],
         },
       },
+      edgeCases: [
+        'CPython does NOT support Tail Call Optimization (TCO); deep recursion always accumulates stack frames.',
+        'Step decrements that skip the base case (e.g. n - 2 with base n == 0 starting from odd n) crash with RecursionError.',
+        'Naive recursive tree algorithms (like Fibonacci) exhibit O(2^N) exponential time complexity due to redundant subtree recalculations.',
+      ],
+      intermediateExample: {
+        code: `# Recursive tree directory / nested list flattening
+def flatten_nested(items):
+    result = []
+    for item in items:
+        if isinstance(item, list):
+            result.extend(flatten_nested(item))
+        else:
+            result.append(item)
+    return result
+
+nested = [1, [2, [3, 4], 5], 6]
+print("Flattened:", flatten_nested(nested))`,
+        explanation: 'Recursion naturally handles arbitrary nested depths like file systems, ASTs, and JSON.',
+        expectedOutput: 'Flattened: [1, 2, 3, 4, 5, 6]',
+      },
+      advancedExample: {
+        code: `import functools, sys
+
+# Memoization using lru_cache converts O(2^N) to O(N) linear time
+@functools.lru_cache(maxsize=None)
+def fib_memo(n):
+    if n < 2:
+        return n
+    return fib_memo(n - 1) + fib_memo(n - 2)
+
+print("Fib(30):", fib_memo(30))
+print("Recursion Limit:", sys.getrecursionlimit())`,
+        explanation: 'Caching recursive call frames eliminates redundant calls, achieving linear time.',
+        expectedOutput: 'Fib(30): 832040\nRecursion Limit: 1000',
+      },
       practiceQuestion: {
         question: 'What is the role of a "base case" in a recursive function?',
         options: [
@@ -781,7 +1180,105 @@ export const RECURSION_MAP: KnowledgeMap = {
         ],
         correctIndex: 1,
         explanation: 'Without a base case, recursive functions call themselves endlessly until running out of memory (stack overflow).',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Think about what condition signals that the problem cannot be divided any further.',
       },
+      practiceQuestions: [
+        {
+          id: 'q-rec-1',
+          question: 'What is the role of a "base case" in a recursive function?',
+          options: [
+            'To double the execution speed',
+            'To stop the recursion and prevent an infinite loop',
+            'To allocate global memory variables',
+            'To convert strings into floating point numbers',
+          ],
+          correctIndex: 1,
+          explanation:
+            'Without a base case, recursive functions call themselves endlessly until running out of stack memory (RecursionError).',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'Think about the stopping condition that terminates calls.',
+        },
+        {
+          id: 'q-rec-2',
+          question: 'What is the output of this classic recursive factorial function for `fact(4)`?',
+          codeSnippet: `def fact(n):\n    if n <= 1:\n        return 1\n    return n * fact(n - 1)\nprint(fact(4))`,
+          options: ['24', '12', '10', '4'],
+          correctIndex: 0,
+          explanation:
+            'fact(4) = 4 * fact(3) = 4 * 3 * fact(2) = 4 * 3 * 2 * fact(1) = 4 * 3 * 2 * 1 = 24.',
+          difficulty: 'easy',
+          type: 'output_prediction',
+          hint: 'Multiply 4 * 3 * 2 * 1 as the stack frames unwind.',
+        },
+        {
+          id: 'q-rec-3',
+          question: 'What exception does Python raise when a recursive function exceeds the maximum call stack limit?',
+          options: [
+            'RecursionError: maximum recursion depth exceeded',
+            'StackOverflowException',
+            'MemoryError: heap exhausted',
+            'InfiniteLoopWarning',
+          ],
+          correctIndex: 0,
+          explanation:
+            'In Python 3.5+, exceeding `sys.getrecursionlimit()` raises a `RecursionError` (a subclass of `RuntimeError`).',
+          difficulty: 'medium',
+          type: 'mcq',
+          hint: 'Python provides a specific built-in exception named after recursion.',
+        },
+        {
+          id: 'q-rec-4',
+          question: 'Identify the bug that causes infinite recursion in this countdown:',
+          codeSnippet: `def blastoff(n):\n    if n == 0:\n        print("Lift off!")\n        return\n    print(n)\n    blastoff(n) # recursive call`,
+          options: [
+            'The recursive call passes `n` instead of `n - 1`, never making progress toward the base case',
+            'The base case condition must check if `n < 0` instead of `n == 0`',
+            'Python cannot return None from a recursive function',
+            'The print function cannot be placed before the recursive call',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Every recursive call must move strictly closer to the base case. Calling `blastoff(n)` keeps `n` identical forever.',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'Look at the argument being passed into `blastoff(...)` in line 6.',
+        },
+        {
+          id: 'q-rec-5',
+          question: 'What is the time complexity of the naive unmemoized Fibonacci algorithm `fib(n) = fib(n-1) + fib(n-2)`?',
+          options: [
+            'O(2^N) exponential time',
+            'O(N) linear time',
+            'O(N log N)',
+            'O(1) constant time',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Each call spawns two subsequent recursive calls without memoization, forming a binary call tree of depth N containing approximately 2^N nodes.',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'Each node splits into two children at every level of the recursive call tree.',
+        },
+        {
+          id: 'q-rec-6',
+          question: 'Does CPython automatically optimize recursive calls through Tail Call Optimization (TCO)?',
+          options: [
+            'No, CPython intentionally does not implement TCO to preserve full, accurate stack tracebacks for debugging',
+            'Yes, all functions ending with return func() are compiled into while loops',
+            'Yes, but only when the -O optimization flag is passed to the python CLI',
+            'Only for functions marked with the @tail_recursion decorator',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Guido van Rossum deliberately rejected TCO in CPython to ensure that tracebacks reflect complete, uncorrupted stack frames for reliable debugging and error diagnosis.',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'Consider the Python philosophy regarding stack trace readability and debugging.',
+        },
+      ],
     },
     {
       id: 'node-rec-base-case',
@@ -970,12 +1467,145 @@ export const BINARY_SEARCH_MAP: KnowledgeMap = {
           ],
         },
       },
+      edgeCases: [
+        'Running binary search on an unsorted list causes false negatives or wrong positions silently.',
+        'Using `while low < high` instead of `while low <= high` skips checking the final single-element interval.',
+        'Duplicate elements: standard binary search finds ANY matching index, while `bisect_left` finds the leftmost insertion index.',
+      ],
+      intermediateExample: {
+        code: `# Iterative binary search returning index or -1
+def binary_search(arr, target):
+    low, high = 0, len(arr) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1
+
+nums = [10, 20, 30, 40, 50, 60]
+print("Index of 40:", binary_search(nums, 40))
+print("Index of 99:", binary_search(nums, 99))`,
+        explanation: 'Standard low and high interval bisection with O(log N) runtime.',
+        expectedOutput: 'Index of 40: 3\nIndex of 99: -1',
+      },
+      advancedExample: {
+        code: `import bisect
+
+# Production bisection using Python's C-accelerated bisect module
+scores = [60, 70, 80, 90]
+grades = ["F", "D", "C", "B", "A"]
+
+def get_grade(score):
+    idx = bisect.bisect_right(scores, score)
+    return grades[idx]
+
+print([get_grade(75), get_grade(92), get_grade(50)])`,
+        explanation: '`bisect.bisect_right` maps breakpoints to grading brackets in logarithmic time.',
+        expectedOutput: "['C', 'A', 'F']",
+      },
       practiceQuestion: {
         question: 'What is the maximum number of comparisons binary search needs to find an element in a sorted list of 1,000,000 items?',
         options: ['1,000,000', '500,000', '20', '1,000'],
         correctIndex: 2,
         explanation: 'Because log2(1,000,000) ≈ 19.93, binary search needs at most 20 comparisons!',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Calculate ceil(log2(1,000,000)) or think: 2^10 = 1024, 2^20 ≈ 1,000,000.',
       },
+      practiceQuestions: [
+        {
+          id: 'q-bs-1',
+          question: 'What is the maximum number of comparisons binary search needs to find an element in a sorted list of 1,000,000 items?',
+          options: ['1,000,000', '500,000', '20', '1,000'],
+          correctIndex: 2,
+          explanation:
+            'Because log2(1,000,000) ≈ 19.93, binary search needs at most 20 comparisons to find or confirm the absence of any key!',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'Think about powers of two: 2^20 is slightly over 1 million.',
+        },
+        {
+          id: 'q-bs-2',
+          question: 'What is the indispensable prerequisite for performing binary search on an array?',
+          options: [
+            'The array elements must be in sorted order',
+            'The array length must be an exact power of two',
+            'The array must contain only unique positive integers',
+            'The array must be immutable',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Binary search depends on the monotonic sorted invariant. If elements are unsorted, discarding one half can inadvertently discard the target.',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'Looking in the middle is only meaningful if elements are ordered.',
+        },
+        {
+          id: 'q-bs-3',
+          question: 'When `arr[mid] < target`, how should the search boundaries be updated?',
+          options: [
+            'low = mid + 1 (the target must lie strictly to the right of mid)',
+            'high = mid - 1',
+            'low = mid',
+            'high = mid',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Because `arr[mid]` is strictly less than target and the array is sorted, the target cannot be at `mid` or any index to its left. Thus `low = mid + 1`.',
+          difficulty: 'medium',
+          type: 'output_prediction',
+          hint: 'If middle is too small, look strictly to the right.',
+        },
+        {
+          id: 'q-bs-4',
+          question: 'Identify the bug in this binary search loop condition when searching for a single-element array `[42]`:',
+          codeSnippet: `low, high = 0, len(arr) - 1\nwhile low < high: # bug here\n    mid = (low + high) // 2\n    if arr[mid] == target: return mid`,
+          options: [
+            'Using `low < high` terminates before inspecting intervals of length 1 (when low == high), missing the target',
+            'Integer division `// 2` throws ZeroDivisionError when len(arr) is 1',
+            'The middle index must always be rounded upwards with math.ceil',
+            'Python requires while True instead of conditional while loops',
+          ],
+          correctIndex: 0,
+          explanation:
+            'When `low == high`, there is still one candidate element remaining in the search range. Using `while low <= high` ensures that final element is verified.',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'What happens when low=0 and high=0 in the condition `0 < 0`?',
+        },
+        {
+          id: 'q-bs-5',
+          question: 'What index does `bisect.bisect_left([10, 20, 30, 40], 25)` return?',
+          codeSnippet: `import bisect\narr = [10, 20, 30, 40]\nidx = bisect.bisect_left(arr, 25)\nprint(idx)`,
+          options: ['2', '1', '3', '-1'],
+          correctIndex: 0,
+          explanation:
+            '`bisect_left` finds the insertion position to maintain sorted order. 25 belongs between 20 (index 1) and 30 (index 2), so it returns index 2.',
+          difficulty: 'challenging',
+          type: 'output_prediction',
+          hint: 'Where should 25 be inserted so the list remains sorted?',
+        },
+        {
+          id: 'q-bs-6',
+          question: 'What is the recurrence relation describing the time complexity of binary search?',
+          options: [
+            'T(N) = T(N/2) + O(1), which solves to O(log N) by the Master Theorem',
+            'T(N) = 2T(N/2) + O(N), which solves to O(N log N)',
+            'T(N) = T(N - 1) + O(1), which solves to O(N)',
+            'T(N) = T(N/2) + O(N), which solves to O(N)',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Each step does constant O(1) comparison work and recurses on a single sub-problem of half size (N/2), leading to logarithmic O(log N) time.',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'Binary search does 1 comparison and investigates ONLY ONE half of size N/2.',
+        },
+      ],
     },
     {
       id: 'node-bs-sorted',

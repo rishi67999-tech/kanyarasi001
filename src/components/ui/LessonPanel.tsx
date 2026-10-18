@@ -295,128 +295,271 @@ export function LessonPanel({
               </button>
             </div>
 
-            {/* Level Explanation Card */}
-            <div className="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-800/40 text-cyan-200 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider text-cyan-400 font-semibold">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>
-                  {explanationLevel === 'beginner'
-                    ? 'Simple Intuition & Definition'
-                    : explanationLevel === 'intermediate'
-                    ? 'Under the Hood & Mechanics'
-                    : 'Internal Architecture & Limits'}
-                </span>
-              </div>
-              <p className="leading-relaxed">
-                {explanationLevel === 'beginner'
-                  ? node.beginnerExplanation || node.shortExplanation
-                  : explanationLevel === 'intermediate'
-                  ? node.intermediateExplanation || node.shortExplanation
-                  : node.advancedDetails || node.whyItMatters}
-              </p>
-            </div>
-
-            {/* Why It Matters */}
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-slate-300 mb-1.5">
-                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                <span>WHY THIS MATTERS</span>
-              </div>
-              <p className="text-slate-300 bg-black/40 p-3 rounded-lg border border-slate-800/70">
-                {node.whyItMatters}
-              </p>
-            </div>
-
-            {/* Practical Real-World Use Cases */}
-            {node.practicalUseCases && node.practicalUseCases.length > 0 && (
-              <div>
-                <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-400 mb-1.5">
-                  <Briefcase className="w-3.5 h-3.5" />
-                  <span>PRACTICAL USE CASES</span>
+            {/* 1. BEGINNER LEVEL */}
+            {explanationLevel === 'beginner' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                {/* Level Explanation Card */}
+                <div className="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-800/40 text-cyan-200 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider text-cyan-400 font-semibold">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>Simple Intuition & Definition</span>
+                  </div>
+                  <p className="leading-relaxed text-xs">
+                    {node.beginnerExplanation || node.shortExplanation}
+                  </p>
                 </div>
-                <ul className="space-y-1 bg-black/40 p-3 rounded-lg border border-slate-800/70 list-disc list-inside text-slate-300">
-                  {node.practicalUseCases.map((uc, i) => (
-                    <li key={i}>{uc}</li>
-                  ))}
-                </ul>
+
+                {/* Why It Matters */}
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-slate-300 mb-1.5">
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                    <span>WHY THIS MATTERS</span>
+                  </div>
+                  <p className="text-slate-300 bg-black/40 p-3 rounded-lg border border-slate-800/70 text-xs">
+                    {node.whyItMatters}
+                  </p>
+                </div>
+
+                {/* Basic / Foundational Code Example */}
+                {node.concreteExample && (
+                  <div>
+                    <div className="text-xs font-mono font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                      <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>BASIC CODE EXAMPLE</span>
+                    </div>
+                    <div className="bg-black/50 p-3 rounded-lg border border-slate-800/70 space-y-2">
+                      <p className="text-slate-300 text-xs">{node.concreteExample.explanation}</p>
+                      {node.concreteExample.code && (
+                        <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-emerald-300 overflow-x-auto">
+                          {node.concreteExample.code}
+                        </pre>
+                      )}
+                      {node.concreteExample.expectedOutput && (
+                        <div className="bg-black/60 p-2 rounded border border-slate-800/80 font-mono text-[11px]">
+                          <span className="text-slate-500 font-semibold">Expected Output: </span>
+                          <span className="text-cyan-300">{node.concreteExample.expectedOutput}</span>
+                        </div>
+                      )}
+                      {hasTrace && (
+                        <button
+                          onClick={() => setActiveTab('trace')}
+                          className="w-full py-2 rounded bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-600/40 text-cyan-300 font-mono text-[11px] transition flex items-center justify-center gap-1.5"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Launch Interactive Execution Stepper</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step-by-Step Breakdown */}
+                {node.lessonSteps && node.lessonSteps.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-slate-300 mb-2">
+                      <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>FOUNDATIONAL BREAKDOWN</span>
+                    </div>
+                    <div className="space-y-2.5">
+                      {node.lessonSteps.map((step) => (
+                        <div
+                          key={step.stepNumber}
+                          className="p-3 rounded-lg bg-black/40 border border-slate-800/70 space-y-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-cyan-950 border border-cyan-500/40 text-cyan-300 flex items-center justify-center font-mono text-[10px] font-bold">
+                              {step.stepNumber}
+                            </span>
+                            <span className="font-semibold text-white text-xs">{step.title}</span>
+                          </div>
+                          <p className="text-slate-300 text-xs">{step.explanation}</p>
+                          {step.codeSnippet && (
+                            <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-cyan-200 overflow-x-auto">
+                              {step.codeSnippet}
+                            </pre>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Step-by-step Lesson Guide */}
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-slate-300 mb-2">
-                <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                <span>STEP-BY-STEP DECOMPOSITION</span>
-              </div>
-              <div className="space-y-2.5">
-                {node.lessonSteps.map((step) => (
-                  <div
-                    key={step.stepNumber}
-                    className="p-3 rounded-lg bg-black/40 border border-slate-800/70 space-y-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-cyan-950 border border-cyan-500/40 text-cyan-300 flex items-center justify-center font-mono text-[10px] font-bold">
-                        {step.stepNumber}
-                      </span>
-                      <span className="font-semibold text-white">{step.title}</span>
-                    </div>
-                    <p className="text-slate-300">{step.explanation}</p>
-                    {step.codeSnippet && (
-                      <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-cyan-200 overflow-x-auto">
-                        {step.codeSnippet}
-                      </pre>
+            {/* 2. INTERMEDIATE LEVEL */}
+            {explanationLevel === 'intermediate' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                {/* Level Explanation Card */}
+                <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-800/50 text-blue-200 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider text-blue-400 font-semibold">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>Deeper Reasoning & Mechanics</span>
+                  </div>
+                  <p className="leading-relaxed text-xs">
+                    {node.intermediateExplanation || `${node.shortExplanation} Under the hood, this construct manages references, scope frames, and data transformations following idiomatic Python conventions.`}
+                  </p>
+                </div>
+
+                {/* Practical Real-World Example */}
+                <div>
+                  <div className="text-xs font-mono font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-blue-400" />
+                    <span>PRACTICAL APPLICATION EXAMPLE</span>
+                  </div>
+                  <div className="bg-black/50 p-3 rounded-lg border border-slate-800/70 space-y-2">
+                    {node.intermediateExample ? (
+                      <>
+                        <p className="text-slate-300 text-xs">{node.intermediateExample.explanation}</p>
+                        {node.intermediateExample.code && (
+                          <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-blue-300 overflow-x-auto">
+                            {node.intermediateExample.code}
+                          </pre>
+                        )}
+                        {node.intermediateExample.expectedOutput && (
+                          <div className="bg-black/60 p-2 rounded border border-slate-800/80 font-mono text-[11px]">
+                            <span className="text-slate-500 font-semibold">Expected Output: </span>
+                            <span className="text-blue-300">{node.intermediateExample.expectedOutput}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : node.practiceExercises && node.practiceExercises.length > 0 ? (
+                      <>
+                        <p className="text-slate-300 text-xs">{node.practiceExercises[0].prompt}</p>
+                        {node.practiceExercises[0].solutionCode && (
+                          <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-blue-300 overflow-x-auto">
+                            {node.practiceExercises[0].solutionCode}
+                          </pre>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-slate-300 text-xs">{node.concreteExample?.explanation || 'Idiomatic pattern implementation.'}</p>
+                        {node.concreteExample?.code && (
+                          <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-blue-300 overflow-x-auto">
+                            {node.concreteExample.code}
+                          </pre>
+                        )}
+                      </>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-            {/* Concrete Example */}
-            {node.concreteExample && (
-              <div>
-                <div className="text-xs font-mono font-semibold text-slate-300 mb-1.5">
-                  CONCRETE EXAMPLE
-                </div>
-                <div className="bg-black/50 p-3 rounded-lg border border-slate-800/70 space-y-2">
-                  <p className="text-slate-300">{node.concreteExample.explanation}</p>
-                  {node.concreteExample.code && (
-                    <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-emerald-300 overflow-x-auto">
-                      {node.concreteExample.code}
-                    </pre>
-                  )}
-                  {node.concreteExample.expectedOutput && (
-                    <div className="bg-black/60 p-2 rounded border border-slate-800/80 font-mono text-[11px]">
-                      <span className="text-slate-500 font-semibold">Expected Output: </span>
-                      <span className="text-cyan-300">{node.concreteExample.expectedOutput}</span>
+                {/* Common Pitfalls & Mistakes */}
+                {node.commonMistakes && node.commonMistakes.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-rose-400 mb-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>COMMON PITFALLS & HOW TO AVOID THEM</span>
                     </div>
-                  )}
-                  {hasTrace && (
-                    <button
-                      onClick={() => setActiveTab('trace')}
-                      className="w-full py-2 rounded bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-600/40 text-cyan-300 font-mono text-[11px] transition flex items-center justify-center gap-1.5"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Launch Interactive Execution Stepper</span>
-                    </button>
-                  )}
-                </div>
+                    <ul className="space-y-1.5 bg-black/40 p-3 rounded-lg border border-slate-800/70 list-disc list-inside text-slate-300 text-xs">
+                      {node.commonMistakes.map((mistake, i) => (
+                        <li key={i} className="leading-relaxed">
+                          {mistake}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Practical Use Cases in Production */}
+                {node.practicalUseCases && node.practicalUseCases.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-400 mb-1.5">
+                      <Briefcase className="w-3.5 h-3.5" />
+                      <span>PRODUCTION USE CASES</span>
+                    </div>
+                    <ul className="space-y-1.5 bg-black/40 p-3 rounded-lg border border-slate-800/70 list-disc list-inside text-slate-300 text-xs">
+                      {node.practicalUseCases.map((uc, i) => (
+                        <li key={i}>{uc}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Common Mistakes */}
-            {node.commonMistakes && node.commonMistakes.length > 0 && (
-              <div>
-                <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-rose-400 mb-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>COMMON PITFALLS</span>
+            {/* 3. DEEP DIVE LEVEL */}
+            {explanationLevel === 'advanced' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                {/* Level Explanation Card */}
+                <div className="p-3.5 rounded-xl bg-purple-950/30 border border-purple-800/50 text-purple-200 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider text-purple-400 font-semibold">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>Internal Architecture & Execution Mechanics</span>
+                  </div>
+                  <p className="leading-relaxed text-xs">
+                    {node.advancedDetails || `CPython interprets and executes this construct via bytecode instructions evaluated in the virtual machine evaluation loop. Memory objects are allocated on the heap and managed via reference counting and cyclic garbage collection.`}
+                  </p>
                 </div>
-                <ul className="space-y-1.5 bg-black/40 p-3 rounded-lg border border-slate-800/70 list-disc list-inside text-slate-300">
-                  {node.commonMistakes.map((mistake, i) => (
-                    <li key={i} className="leading-relaxed">
-                      {mistake}
-                    </li>
-                  ))}
-                </ul>
+
+                {/* Edge Cases & Subtle Traps */}
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-mono font-semibold text-amber-400 mb-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>EDGE CASES & BOUNDARY CONDITIONS</span>
+                  </div>
+                  <ul className="space-y-1.5 bg-black/40 p-3 rounded-lg border border-slate-800/70 list-disc list-inside text-slate-300 text-xs">
+                    {node.edgeCases && node.edgeCases.length > 0 ? (
+                      node.edgeCases.map((ec, i) => (
+                        <li key={i} className="leading-relaxed">{ec}</li>
+                      ))
+                    ) : (
+                      <>
+                        <li className="leading-relaxed">
+                          <span className="font-semibold text-amber-200">Reference Binding:</span> Assignment copies object pointers, not the underlying heap memory buffers.
+                        </li>
+                        <li className="leading-relaxed">
+                          <span className="font-semibold text-amber-200">Boundary Mutation:</span> Mutating data structures during active traversal triggers silent index skips or iteration anomalies.
+                        </li>
+                        <li className="leading-relaxed">
+                          <span className="font-semibold text-amber-200">Scope Resolution:</span> In-place assignment within inner functions shadows enclosing variables unless explicitly marked global or nonlocal.
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+
+                {/* Advanced Example */}
+                <div>
+                  <div className="text-xs font-mono font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>ADVANCED ARCHITECTURE EXAMPLE</span>
+                  </div>
+                  <div className="bg-black/50 p-3 rounded-lg border border-slate-800/70 space-y-2">
+                    {node.advancedExample ? (
+                      <>
+                        <p className="text-slate-300 text-xs">{node.advancedExample.explanation}</p>
+                        {node.advancedExample.code && (
+                          <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-purple-300 overflow-x-auto">
+                            {node.advancedExample.code}
+                          </pre>
+                        )}
+                        {node.advancedExample.expectedOutput && (
+                          <div className="bg-black/60 p-2 rounded border border-slate-800/80 font-mono text-[11px]">
+                            <span className="text-slate-500 font-semibold">Expected Output: </span>
+                            <span className="text-purple-300">{node.advancedExample.expectedOutput}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : node.practiceExercises && node.practiceExercises.length > 1 ? (
+                      <>
+                        <p className="text-slate-300 text-xs">{node.practiceExercises[1].prompt}</p>
+                        {node.practiceExercises[1].solutionCode && (
+                          <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-purple-300 overflow-x-auto">
+                            {node.practiceExercises[1].solutionCode}
+                          </pre>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-slate-300 text-xs">Under-the-hood bytecode disassembly and memory id inspection:</p>
+                        <pre className="bg-[#0b0d13] p-2.5 rounded border border-slate-800 text-[11px] font-mono text-purple-300 overflow-x-auto">
+                          {`import dis, sys\n# Inspect bytecode evaluation instructions\nprint(f"Memory overhead: {sys.getsizeof(${node.concreteExample?.code ? '42' : 'None'})} bytes")`}
+                        </pre>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

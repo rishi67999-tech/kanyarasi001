@@ -173,8 +173,8 @@ function runSuite() {
   console.log('\n--- 4. Curriculum Catalog Integrity ---')
   const catalogTopics = getAllCurriculumTopics()
   assert(
-    catalogTopics.length >= 70,
-    `Curriculum catalog topic count >= 70 (found ${catalogTopics.length})`
+    catalogTopics.length >= 95,
+    `Curriculum catalog topic count >= 95 (found ${catalogTopics.length})`
   )
 
   const distinctIds = new Set(catalogTopics.map((t) => t.id))
@@ -182,6 +182,70 @@ function runSuite() {
     distinctIds.size === catalogTopics.length,
     `All ${catalogTopics.length} curriculum topic IDs are unique without collision`
   )
+
+  // -----------------------------------------------------------------------------
+  // Test 5: Learning Depth & Practice Question Expansion Verification
+  // -----------------------------------------------------------------------------
+  console.log('\n--- 5. Learning Depth & Practice Questions Expansion ---')
+  const keyNodesToCheck = [
+    'node-loops',
+    'node-for-loop',
+    'node-while-loop',
+    'node-var-root',
+    'node-lists-root',
+    'node-func-root',
+    'node-rec-root',
+    'node-bs-root',
+    'node-fund-root',
+    'node-cf-root',
+    'node-ds-root',
+    'node-fn-root',
+    'node-ef-root',
+    'node-oop-root',
+    'node-adv-root',
+    'node-proj-root',
+  ]
+
+  for (const nodeId of keyNodesToCheck) {
+    let foundNode: any = null
+    for (const map of uniqueMaps) {
+      const match = map.nodes.find((n) => n.id === nodeId)
+      if (match) {
+        foundNode = match
+        break
+      }
+    }
+
+    assert(Boolean(foundNode), `Key node [${nodeId}] located in maps`)
+    if (foundNode) {
+      assert(
+        Boolean(foundNode.intermediateExample && foundNode.intermediateExample.code),
+        `Node [${nodeId}]: Has dedicated intermediate practical example`
+      )
+      assert(
+        Boolean(foundNode.advancedExample && foundNode.advancedExample.code),
+        `Node [${nodeId}]: Has dedicated advanced deep dive example`
+      )
+      assert(
+        foundNode.concreteExample?.code !== foundNode.intermediateExample?.code &&
+          foundNode.intermediateExample?.code !== foundNode.advancedExample?.code,
+        `Node [${nodeId}]: Beginner, Intermediate, and Deep Dive examples are distinctly different`
+      )
+      assert(
+        Boolean(foundNode.edgeCases && foundNode.edgeCases.length >= 2),
+        `Node [${nodeId}]: Has >= 2 concept edge cases and subtle traps`
+      )
+      assert(
+        Boolean(foundNode.practiceQuestions && foundNode.practiceQuestions.length >= 5),
+        `Node [${nodeId}]: Has expanded practice questions (>= 5 questions, found ${foundNode.practiceQuestions?.length || 0})`
+      )
+      const hasHints = foundNode.practiceQuestions?.some((q: any) => Boolean(q.hint))
+      assert(
+        Boolean(hasHints),
+        `Node [${nodeId}]: Practice questions include pedagogical hints without revealing answer`
+      )
+    }
+  }
 
   console.log('\n====================================================')
   console.log(`  VERIFICATION RESULTS: ${passedTests} PASSED, ${failedTests} FAILED (TOTAL: ${totalTests})`)

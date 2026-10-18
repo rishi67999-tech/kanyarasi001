@@ -55,6 +55,44 @@ export const PYTHON_LOOPS_MAP: KnowledgeMap = {
         explanation:
           'The loop assigns each element from the list to the variable "name" one by one and executes the print block.',
       },
+      beginnerExplanation:
+        'A loop repeats a block of code until a condition is met or a sequence ends, eliminating copy-paste repetition.',
+      intermediateExplanation:
+        'Python loops operate by obtaining an iterator from an iterable using iter() and continually invoking next() until StopIteration is raised.',
+      advancedDetails:
+        'Under CPython, for loops compile to GET_ITER and FOR_ITER bytecode instructions. FOR_ITER pushes the next element onto the evaluation stack and jumps forward if the iterator is exhausted, bypassing Python-level function call overhead.',
+      edgeCases: [
+        'Mutating a list while iterating over it shifts index pointers, causing elements to be skipped silently.',
+        'Floating-point increments in while loops (e.g. while x != 1.0: x += 0.1) can loop infinitely due to IEEE 754 precision inaccuracies.',
+        'The loop variable leaks into the surrounding function or global scope in Python and retains its final value after the loop exits.',
+      ],
+      intermediateExample: {
+        code: `# Processing API batch records with while loop and exponential backoff
+attempts = 0
+success = False
+while attempts < 3 and not success:
+    attempts += 1
+    if attempts == 2:
+        success = True
+print(f"Succeeded on attempt {attempts}")`,
+        explanation: 'A production pattern combining an attempt counter guard with a status flag.',
+        expectedOutput: 'Succeeded on attempt 2',
+      },
+      advancedExample: {
+        code: `import dis
+
+# Inspect CPython bytecode for loop iteration
+def count_evens(nums):
+    total = 0
+    for n in nums:
+        if n % 2 == 0:
+            total += 1
+    return total
+
+dis.dis(count_evens)`,
+        explanation: 'Disassembly reveals GET_ITER and FOR_ITER opcodes executing in the C evaluation loop.',
+        expectedOutput: 'GET_ITER, FOR_ITER, BINARY_OP, POP_JUMP_IF_FALSE',
+      },
       practiceQuestion: {
         question: 'Which of the following best describes the core purpose of a loop?',
         options: [
@@ -66,7 +104,120 @@ export const PYTHON_LOOPS_MAP: KnowledgeMap = {
         correctIndex: 1,
         explanation:
           'Loops enable automated repetition of code blocks, preventing manual duplication and handling dynamic collections effortlessly.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Think about the DRY principle (Don\'t Repeat Yourself) in software architecture.',
       },
+      practiceQuestions: [
+        {
+          id: 'q-loops-1',
+          question: 'Which of the following best describes the core purpose of a loop?',
+          options: [
+            'To define reusable function parameters',
+            'To repeat an operation automatically without duplicate code',
+            'To allocate dynamic memory on the heap',
+            'To convert strings into numerical values',
+          ],
+          correctIndex: 1,
+          explanation:
+            'Loops enable automated repetition of code blocks, preventing manual duplication and handling dynamic collections effortlessly.',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'Think about the DRY principle (Don\'t Repeat Yourself).',
+        },
+        {
+          id: 'q-loops-2',
+          question: 'What is the output of the following accumulator loop?',
+          codeSnippet: `total = 0\nfor x in [1, 2, 3, 4]:\n    total += x\nprint(total)`,
+          options: ['10', '4', '24', '0'],
+          correctIndex: 0,
+          explanation:
+            'The variable `total` starts at 0 and adds each item sequentially: 0 + 1 = 1, + 2 = 3, + 3 = 6, + 4 = 10.',
+          difficulty: 'easy',
+          type: 'output_prediction',
+          hint: 'Add each list element one by one to the running sum variable.',
+        },
+        {
+          id: 'q-loops-3',
+          question: 'What will be printed when this while loop terminates?',
+          codeSnippet: `count = 0\nwhile count < 10:\n    count += 2\n    if count == 6:\n        break\nprint(count)`,
+          options: ['6', '8', '10', '4'],
+          correctIndex: 0,
+          explanation:
+            'The loop adds 2 on each iteration: count reaches 2, 4, then 6. At 6, `count == 6` evaluates to True, triggering `break`, which immediately exits to print 6.',
+          difficulty: 'medium',
+          type: 'output_prediction',
+          hint: 'Notice that count increments BEFORE the break check in the loop body.',
+        },
+        {
+          id: 'q-loops-4',
+          question: 'Identify the critical bug in the following countdown loop:',
+          codeSnippet: `n = 5\nwhile n > 0:\n    print(n)\n    # missing decrement`,
+          options: [
+            'The variable `n` is never decremented, causing an infinite loop',
+            'While loops cannot evaluate greater-than comparisons against 0',
+            'A break statement is strictly required in all Python while loops',
+            'The print function cannot output integer variables directly',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Without `n -= 1`, `n` remains 5 forever, so the condition `n > 0` never becomes False, creating an infinite loop that freezes the program.',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'Look at whether the condition variable `n` changes anywhere in the body.',
+        },
+        {
+          id: 'q-loops-5',
+          question: 'What is the output of this loop with an else clause?',
+          codeSnippet: `found = False\nfor x in [3, 7, 9]:\n    if x % 2 == 0:\n        found = True\n        break\nelse:\n    print("No evens")`,
+          options: [
+            'No evens',
+            'None',
+            'SyntaxError',
+            'No output is printed',
+          ],
+          correctIndex: 0,
+          explanation:
+            'In Python, a loop `else` block executes ONLY if the loop finishes naturally without encountering a `break`. Since no even number exists, break is never hit, so the else block executes.',
+          difficulty: 'medium',
+          type: 'output_prediction',
+          hint: 'Loop else blocks execute only when the loop sequence is exhausted without breaking.',
+        },
+        {
+          id: 'q-loops-6',
+          question: 'What subtle hazard occurs when removing items from a list during iteration?',
+          codeSnippet: `items = [1, 2, 3, 4]\nfor item in items:\n    if item % 2 == 0:\n        items.remove(item)`,
+          options: [
+            'Indices shift left, causing the iterator to skip adjacent elements silently',
+            'Python immediately raises a ConcurrentModificationError',
+            'The list becomes an immutable tuple permanently',
+            'Memory is leaked and Python halts execution with a SegFault',
+          ],
+          correctIndex: 0,
+          explanation:
+            'When an item is removed, all subsequent elements shift one position left. The internal index increments normally, skipping the element that slid into the vacated index.',
+          difficulty: 'challenging',
+          type: 'debugging',
+          hint: 'Think about what happens to item indices in dynamic arrays when a middle element is deleted.',
+        },
+        {
+          id: 'q-loops-7',
+          question: 'What is the output of the following reverse range loop?',
+          codeSnippet: `res = []\nfor i in range(10, 2, -3):\n    res.append(i)\nprint(res)`,
+          options: [
+            '[10, 7, 4]',
+            '[10, 7, 4, 1]',
+            '[10, 8, 6, 4, 2]',
+            '[8, 5, 2]',
+          ],
+          correctIndex: 0,
+          explanation:
+            '`range(10, 2, -3)` starts at 10, decrements by 3: 10, 7, 4. The next value would be 1, which is not strictly greater than stop value 2, so iteration stops.',
+          difficulty: 'challenging',
+          type: 'output_prediction',
+          hint: 'Start at 10, subtract 3 while strictly greater than stop bound 2.',
+        },
+      ],
       prerequisiteIds: [],
     },
     {
@@ -176,6 +327,45 @@ export const PYTHON_LOOPS_MAP: KnowledgeMap = {
           ],
         },
       },
+      beginnerExplanation:
+        'A for loop visits each element in a sequence (such as a list, string, or range) from first to last automatically.',
+      intermediateExplanation:
+        'The loop creates an iterator via iter(sequence) and invokes next() each cycle. Unpacking can be performed directly in the for target (e.g. for key, val in d.items():).',
+      advancedDetails:
+        'Under CPython, range objects are lazy arithmetic progressions with O(1) membership testing (__contains__) and O(1) slice access, storing only start, stop, and step in C structs.',
+      edgeCases: [
+        'range() values in Python 3 are virtual sequences; range(10**15) uses negligible memory (~48 bytes).',
+        'Assigning to the loop target variable inside the body does NOT alter the sequence progression on subsequent iterations.',
+        'Iterating over a dictionary yields only its keys; use .items() or .values() to access values directly.',
+      ],
+      intermediateExample: {
+        code: `# Unpacking key-value items and filtering metrics
+metrics = {"cpu": 78, "memory": 82, "disk": 45}
+high_load = [service for service, usage in metrics.items() if usage > 75]
+print("High load components:", high_load)`,
+        explanation: 'Iterating over key-value pairs directly with tuple unpacking and comprehension filtering.',
+        expectedOutput: "High load components: ['cpu', 'memory']",
+      },
+      advancedExample: {
+        code: `# Custom Iterable implementing the Iterator Protocol
+class FibonacciStream:
+    def __init__(self, limit):
+        self.limit = limit
+        self.a, self.b = 0, 1
+        self.count = 0
+    def __iter__(self):
+        return self
+    def __next__(self):
+        if self.count >= self.limit:
+            raise StopIteration
+        self.a, self.b = self.b, self.a + self.b
+        self.count += 1
+        return self.a
+
+print(list(FibonacciStream(5)))`,
+        explanation: 'Any class implementing __iter__ and __next__ works seamlessly in a for loop.',
+        expectedOutput: '[1, 1, 2, 3, 5]',
+      },
       practiceQuestion: {
         question: 'What numbers will `for x in range(2, 5): print(x)` output?',
         options: [
@@ -187,7 +377,102 @@ export const PYTHON_LOOPS_MAP: KnowledgeMap = {
         correctIndex: 1,
         explanation:
           'Python range(start, stop) stops BEFORE the `stop` value, so range(2, 5) produces 2, 3, and 4.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Remember that Python upper bounds in range() are exclusive.',
       },
+      practiceQuestions: [
+        {
+          id: 'q-for-1',
+          question: 'What numbers will `for x in range(2, 5): print(x)` output?',
+          options: [
+            '2, 3, 4, 5',
+            '2, 3, 4',
+            '3, 4, 5',
+            '2, 5',
+          ],
+          correctIndex: 1,
+          explanation:
+            'Python range(start, stop) stops BEFORE the `stop` value, so range(2, 5) produces 2, 3, and 4.',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'The stop parameter in range is exclusive.',
+        },
+        {
+          id: 'q-for-2',
+          question: 'What is the output of the following character loop?',
+          codeSnippet: `chars = []\nfor c in "py":\n    chars.append(c.upper())\nprint("".join(chars))`,
+          options: ['PY', 'py', "['P', 'Y']", 'P Y'],
+          correctIndex: 0,
+          explanation:
+            'Strings are sequences of characters. The loop visits "p" (capitalized to "P") and "y" (capitalized to "Y"), and "".join joins them into "PY".',
+          difficulty: 'easy',
+          type: 'output_prediction',
+          hint: 'Strings are iterable character sequences in Python.',
+        },
+        {
+          id: 'q-for-3',
+          question: 'What does this loop using `enumerate()` output?',
+          codeSnippet: `items = ["alpha", "beta"]\nfor idx, item in enumerate(items):\n    if idx == 1:\n        print(item)`,
+          options: ['beta', 'alpha', '0:alpha', '1:beta'],
+          correctIndex: 0,
+          explanation:
+            '`enumerate()` yields (index, value) pairs with 0-based indices. At index 1, the item is "beta".',
+          difficulty: 'medium',
+          type: 'output_prediction',
+          hint: 'Index 0 is "alpha", index 1 is "beta".',
+        },
+        {
+          id: 'q-for-4',
+          question: 'What happens if you reassign the loop variable `i` inside the loop body?',
+          codeSnippet: `for i in range(3):\n    i = 100\n    print(i, end=" ")`,
+          options: [
+            '100 100 100 (the next iteration resets i to the next item from the iterator)',
+            '100 101 102',
+            '100 and then the loop terminates immediately',
+            'SyntaxError: cannot reassign loop target',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Reassigning the loop variable inside the body affects only the current pass. On the next cycle, the for loop statement pulls the next value from the iterator and re-binds `i`.',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'The loop iterator controls the variable value at the start of every cycle.',
+        },
+        {
+          id: 'q-for-5',
+          question: 'What is the output of this flattened list comprehension?',
+          codeSnippet: `grid = [[1, 2], [3, 4]]\nflat = [val for row in grid for val in row]\nprint(flat)`,
+          options: [
+            '[1, 2, 3, 4]',
+            '[[1, 2], [3, 4]]',
+            '[1, 3, 2, 4]',
+            '[[1, 3], [2, 4]]',
+          ],
+          correctIndex: 0,
+          explanation:
+            'In nested comprehensions, the order of `for` clauses matches regular nested loop order: `for row in grid:` then `for val in row:`.',
+          difficulty: 'challenging',
+          type: 'output_prediction',
+          hint: 'Comprehension loops read from left to right like nested loops.',
+        },
+        {
+          id: 'q-for-6',
+          question: 'What is the memory consumption difference between `range(100)` and `range(10_000_000)` in Python 3?',
+          options: [
+            'Essentially zero: range objects store only start, stop, and step in fixed-size structs (~48 bytes)',
+            'range(10_000_000) consumes roughly 80 megabytes of heap memory',
+            'range(10_000_000) pre-allocates an array of 10 million integers in C',
+            'Python 3 raises MemoryError for ranges larger than 1 million',
+          ],
+          correctIndex: 0,
+          explanation:
+            'In Python 3, `range` is a lazy sequence type that computes elements on demand. It takes the same constant O(1) memory (~48 bytes) regardless of the span.',
+          difficulty: 'challenging',
+          type: 'mcq',
+          hint: 'Python 3 range does not generate lists in advance like Python 2 xrange.',
+        },
+      ],
       prerequisiteIds: ['node-loops', 'node-iteration'],
     },
     {
@@ -226,6 +511,53 @@ export const PYTHON_LOOPS_MAP: KnowledgeMap = {
         explanation:
           'Energy decreases by 1 on each step until it hits 0, causing `energy > 0` to become False.',
       },
+      beginnerExplanation:
+        'A while loop executes repeatedly as long as a boolean condition remains True, checking the condition before every pass.',
+      intermediateExplanation:
+        'Ideal for indefinite iteration where the total iterations cannot be predicted in advance (e.g. streaming sockets, polling job queues, user interaction loops).',
+      advancedDetails:
+        'Under CPython, while loops compile to standard POP_JUMP_IF_FALSE and JUMP_BACKWARD bytecode instructions, maintaining loop invariants without iterator allocation overhead.',
+      edgeCases: [
+        'Equality checks with step intervals that skip the target (e.g. while x != 10: x += 3) cause indefinite overshoot and infinite loops.',
+        'Floating point loop guards accumulate rounding errors; prefer integer counters or math.isclose() tolerances.',
+        'A while loop condition is evaluated at the start of each iteration, not continuously mid-execution.',
+      ],
+      intermediateExample: {
+        code: `# Polling a worker task with maximum timeout retries
+import time
+retries = 0
+max_retries = 3
+ready = False
+
+while not ready and retries < max_retries:
+    retries += 1
+    # Check status
+    if retries == 2:
+        ready = True
+
+print(f"Task ready: {ready} after {retries} checks")`,
+        explanation: 'Guarded while loop combining a status flag with a bounded timeout counter.',
+        expectedOutput: 'Task ready: True after 2 checks',
+      },
+      advancedExample: {
+        code: `# State machine execution using while True and pattern matching
+state = "INIT"
+transitions = []
+
+while True:
+    transitions.append(state)
+    match state:
+        case "INIT":
+            state = "CONNECTING"
+        case "CONNECTING":
+            state = "READY"
+        case "READY":
+            break
+
+print(" -> ".join(transitions))`,
+        explanation: 'Implementing a discrete state transition loop with while True and pattern matching.',
+        expectedOutput: 'INIT -> CONNECTING -> READY',
+      },
       practiceQuestion: {
         question: 'What happens if a while loop condition never becomes False and has no break statement?',
         options: [
@@ -237,7 +569,108 @@ export const PYTHON_LOOPS_MAP: KnowledgeMap = {
         correctIndex: 1,
         explanation:
           'Without a termination condition or break, the loop continues indefinitely until the process is forcefully killed or runs out of resources.',
+        difficulty: 'easy',
+        type: 'mcq',
+        hint: 'Without a stopping condition, the interpreter will never exit the block.',
       },
+      practiceQuestions: [
+        {
+          id: 'q-while-1',
+          question: 'What happens if a while loop condition never becomes False and has no break statement?',
+          options: [
+            'Python throws a SyntaxError on compile',
+            'The loop executes forever (infinite loop), hanging the program',
+            'The loop automatically halts after 1000 iterations',
+            'Python resets the variables to zero',
+          ],
+          correctIndex: 1,
+          explanation:
+            'Without a termination condition or break, the loop continues indefinitely until the process is forcefully killed or runs out of resources.',
+          difficulty: 'easy',
+          type: 'mcq',
+          hint: 'Think about what causes infinite execution in non-terminating algorithms.',
+        },
+        {
+          id: 'q-while-2',
+          question: 'What value is printed after this while loop finishes?',
+          codeSnippet: `i = 1\nwhile i <= 3:\n    i += 1\nprint(i)`,
+          options: ['4', '3', '2', '1'],
+          correctIndex: 0,
+          explanation:
+            'When i is 3 (<= 3), the body runs once more, incrementing i to 4. At i=4, the condition 4 <= 3 is False, so the loop ends and prints 4.',
+          difficulty: 'easy',
+          type: 'output_prediction',
+          hint: 'Trace the value of i on the final iteration when 3 <= 3 passes.',
+        },
+        {
+          id: 'q-while-3',
+          question: 'What is the output of this sentinel-controlled while loop?',
+          codeSnippet: `stream = [5, 12, -1, 40]\nidx = 0\nfound_values = []\nwhile stream[idx] != -1:\n    found_values.append(stream[idx])\n    idx += 1\nprint(found_values)`,
+          options: [
+            '[5, 12]',
+            '[5, 12, -1]',
+            '[5, 12, -1, 40]',
+            'IndexError: list index out of range',
+          ],
+          correctIndex: 0,
+          explanation:
+            'The loop stops immediately when `stream[idx]` equals the sentinel value -1, so only 5 and 12 are collected.',
+          difficulty: 'medium',
+          type: 'output_prediction',
+          hint: 'The sentinel value -1 stops the loop before it can be appended.',
+        },
+        {
+          id: 'q-while-4',
+          question: 'Identify the subtle bug in this loop designed to stop at 10:',
+          codeSnippet: `val = 0\nwhile val != 10:\n    val += 3\nprint("Reached 10")`,
+          options: [
+            'val starts at 0 and steps by 3 (0, 3, 6, 9, 12), overshooting 10 and looping infinitely',
+            'The != operator cannot be used in Python while statements',
+            'val must be defined as a float to work with increment operations',
+            'Python will automatically truncate 12 to 10',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Because the increment is 3, val takes values 0 -> 3 -> 6 -> 9 -> 12 -> 15... It never equals exactly 10, creating an infinite loop. Always use `<` or `>=` rather than `!=`.',
+          difficulty: 'medium',
+          type: 'debugging',
+          hint: 'Check if 10 is divisible by the step size 3 starting from 0.',
+        },
+        {
+          id: 'q-while-5',
+          question: 'What is the output of this while loop with an else branch?',
+          codeSnippet: `n = 0\nwhile n < 5:\n    if n == 2:\n        break\n    n += 1\nelse:\n    print("Exhausted")\nprint(f"Ended at {n}")`,
+          options: [
+            'Ended at 2',
+            'Exhausted\nEnded at 2',
+            'Exhausted\nEnded at 5',
+            'Ended at 5',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Because the loop encountered a `break` statement when `n == 2`, the `else` clause was skipped entirely. Only "Ended at 2" is printed.',
+          difficulty: 'challenging',
+          type: 'output_prediction',
+          hint: 'A break statement bypasses the loop else block completely.',
+        },
+        {
+          id: 'q-while-6',
+          question: 'What sequence of numbers does this two-pointer while loop trace?',
+          codeSnippet: `left, right = 0, 4\nhalves = []\nwhile left < right:\n    halves.append((left, right))\n    left += 1\n    right -= 1\nprint(halves)`,
+          options: [
+            '[(0, 4), (1, 3)]',
+            '[(0, 4), (1, 3), (2, 2)]',
+            '[(0, 4)]',
+            '[(1, 3), (2, 2)]',
+          ],
+          correctIndex: 0,
+          explanation:
+            'Iteration 1: left=0, right=4 (appends (0, 4), updates to 1, 3). Iteration 2: left=1, right=3 (appends (1, 3), updates to 2, 2). Iteration 3: 2 < 2 is False, loop exits.',
+          difficulty: 'challenging',
+          type: 'output_prediction',
+          hint: 'Check the condition left < right when both pointers meet at 2.',
+        },
+      ],
       prerequisiteIds: ['node-loops', 'node-conditions'],
     },
     {

@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ChevronLeft,
   RotateCcw,
+  Lightbulb,
 } from 'lucide-react'
 import type { PracticeQuestion } from '../../types/knowledge'
 
@@ -41,6 +42,7 @@ export function PracticeQuiz({
   // Track state per question (by question id or index)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number | null>>({})
   const [submittedStatus, setSubmittedStatus] = useState<Record<number, boolean>>({})
+  const [showHint, setShowHint] = useState<Record<number, boolean>>({})
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>('all')
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
 
@@ -48,6 +50,7 @@ export function PracticeQuiz({
   useEffect(() => {
     setSelectedAnswers({})
     setSubmittedStatus({})
+    setShowHint({})
     setSelectedDifficulty('all')
     setCurrentQuestionIndex(0)
   }, [rawQuestions])
@@ -401,6 +404,37 @@ export function PracticeQuiz({
               <pre className="p-3 text-[11px] font-mono text-cyan-200 overflow-x-auto leading-relaxed">
                 {currentQuestion.codeSnippet}
               </pre>
+            </div>
+          )}
+
+          {/* Helpful Pedagogical Hint */}
+          {currentQuestion.hint && !isCurrentSubmitted && (
+            <div className="pt-0.5">
+              {!showHint[originalQuestionIndex] ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowHint((prev) => ({
+                      ...prev,
+                      [originalQuestionIndex]: true,
+                    }))
+                  }
+                  className="inline-flex items-center gap-1.5 text-[11px] font-mono text-amber-400 hover:text-amber-300 transition group"
+                >
+                  <Lightbulb className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                  <span className="underline underline-offset-2">Need a hint?</span>
+                </button>
+              ) : (
+                <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/60 text-amber-200 text-xs flex items-start gap-2.5 animate-in fade-in duration-200">
+                  <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5 flex-1">
+                    <span className="font-semibold font-mono text-[10px] text-amber-400 uppercase tracking-wider block">
+                      Conceptual Clue
+                    </span>
+                    <p className="leading-relaxed font-sans">{currentQuestion.hint}</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

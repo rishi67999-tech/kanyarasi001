@@ -24,6 +24,7 @@ export const PracticeQuestionSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'challenging']).optional(),
   type: z.enum(['mcq', 'output_prediction', 'debugging', 'fill_blank']).optional(),
   codeSnippet: z.string().optional(),
+  hint: z.string().optional(),
 })
 
 export const LessonStepSchema = z.object({
@@ -78,6 +79,21 @@ export const ConceptNodeSchema = z.object({
   beginnerExplanation: z.string().optional(),
   intermediateExplanation: z.string().optional(),
   advancedDetails: z.string().optional(),
+  edgeCases: z.array(z.string()).optional(),
+  intermediateExample: z
+    .object({
+      code: z.string().optional(),
+      explanation: z.string(),
+      expectedOutput: z.string().optional(),
+    })
+    .optional(),
+  advancedExample: z
+    .object({
+      code: z.string().optional(),
+      explanation: z.string(),
+      expectedOutput: z.string().optional(),
+    })
+    .optional(),
   practicalUseCases: z.array(z.string()).optional(),
   lessonSteps: z.array(LessonStepSchema).min(1),
   concreteExample: z

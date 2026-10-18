@@ -31,6 +31,7 @@ export interface PracticeQuestion {
   difficulty?: 'easy' | 'medium' | 'challenging'
   type?: 'mcq' | 'output_prediction' | 'debugging' | 'fill_blank'
   codeSnippet?: string
+  hint?: string
 }
 
 export interface LessonStep {
@@ -71,6 +72,17 @@ export interface ConceptNode {
   beginnerExplanation?: string
   intermediateExplanation?: string
   advancedDetails?: string
+  edgeCases?: string[]
+  intermediateExample?: {
+    code?: string
+    explanation: string
+    expectedOutput?: string
+  }
+  advancedExample?: {
+    code?: string
+    explanation: string
+    expectedOutput?: string
+  }
   practicalUseCases?: string[]
   lessonSteps: LessonStep[]
   concreteExample?: {
